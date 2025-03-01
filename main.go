@@ -1,0 +1,113 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"math/rand/v2"
+	"net/http"
+	"path"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+type Task struct {
+    id uuid.UUID
+    finished bool
+    result int
+}
+
+type Database struct {
+    tasks map[uuid.UUID]*Task
+}
+
+func newDatabase() *Database {
+    return &Database{
+        tasks: make(map[uuid.UUID]*Task),
+    }
+}
+
+func SleepAndComplete(t *Task, d time.Duration) {
+    time.Sleep(d)
+    fmt.Println("task finished with id " + t.id.String())
+
+    t.result = rand.IntN(1000)
+    t.finished = true
+}
+
+func (db *Database) getStatusHandler(w http.ResponseWriter, r *http.Request) {
+    taskId := path.Base(r.URL.Path)
+    fmt.Println("got get status request on id: " + taskId)
+
+    uuid, _ := uuid.Parse(taskId)
+    var result string
+
+    if db.tasks[uuid].finished {
+        result = "{\"status\": \"ready\"}"
+    } else {
+        result = "{\"status\": \"in progress\"}"
+    }
+
+    fmt.Fprintln(w, result)
+}
+
+func (db *Database) getResultHandler(w http.ResponseWriter, r *http.Request) {
+    taskId := path.Base(r.URL.Path)
+    fmt.Println("got get result request on id: " + taskId)
+
+    uuid, _ := uuid.Parse(taskId)
+    
+    if db.tasks[uuid].finished {
+        fmt.Fprintln(w, db.tasks[uuid].result)
+    } else {
+        fmt.Fprintln(w, "task isn't finished yet")
+    }
+}
+
+func (db *Database) postTaskHandler(w http.ResponseWriter, r *http.Request) {
+    taskInfo, _ := io.ReadAll(r.Body)
+    fmt.Println("got post request with task time: " + string(taskInfo))
+
+    taskDur, err := time.ParseDuration(string(taskInfo))
+
+    if err != nil {
+        fmt.Fprintln(w, err.Error())
+        return
+    }
+
+    newUuid := uuid.New()
+    db.tasks[newUuid] = &Task{
+        id: newUuid,
+    }
+
+    fmt.Println("created task with id " + newUuid.String())
+
+    go SleepAndComplete(db.tasks[newUuid], taskDur)
+    fmt.Fprintln(w, newUuid.String())
+}
+
+func createServer(db *Database, addr string) error {
+    r := chi.NewRouter()
+    r.Route("/", func(r chi.Router) {
+        r.Get("/status/{task_id}", db.getStatusHandler)
+        r.Get("/result/{task_id}", db.getResultHandler)
+        r.Post("/task", db.postTaskHandler)
+    })
+
+    s := &http.Server{
+        Addr: addr,
+        Handler: r,
+    }
+
+    return s.ListenAndServe()
+}
+
+func main() {
+    db := newDatabase()
+    err := createServer(db, ":8080")
+
+    if err != nil {
+        _ = fmt.Errorf("%s", "failed to start: " + err.Error())
+    }
+}
