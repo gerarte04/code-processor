@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -40,15 +41,25 @@ func (db *Database) getStatusHandler(w http.ResponseWriter, r *http.Request) {
     taskId := path.Base(r.URL.Path)
     fmt.Println("got get status request on id: " + taskId)
 
-    uuid, _ := uuid.Parse(taskId)
+    uuid, err := uuid.Parse(taskId)
+
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        return
+    } else if _, ok := db.tasks[uuid]; !ok {
+        w.WriteHeader(http.StatusNotFound)
+        return
+    }
+
     var result string
 
     if db.tasks[uuid].finished {
         result = "{\"status\": \"ready\"}"
     } else {
-        result = "{\"status\": \"in progress\"}"
+        result = "{\"status\": \"in_progress\"}"
     }
 
+    w.WriteHeader(http.StatusOK)
     fmt.Fprintln(w, result)
 }
 
@@ -56,24 +67,42 @@ func (db *Database) getResultHandler(w http.ResponseWriter, r *http.Request) {
     taskId := path.Base(r.URL.Path)
     fmt.Println("got get result request on id: " + taskId)
 
-    uuid, _ := uuid.Parse(taskId)
+    uuid, err := uuid.Parse(taskId)
+
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        return
+    } else if _, ok := db.tasks[uuid]; !ok {
+        w.WriteHeader(http.StatusNotFound)
+        return
+    }
     
     if db.tasks[uuid].finished {
-        fmt.Fprintln(w, db.tasks[uuid].result)
+        w.WriteHeader(http.StatusOK)
+        fmt.Fprintln(w, "{\"result\": \"" + strconv.Itoa(db.tasks[uuid].result) + "\"}")
     } else {
-        fmt.Fprintln(w, "task isn't finished yet")
+        w.WriteHeader(http.StatusProcessing)
     }
 }
 
 func (db *Database) postTaskHandler(w http.ResponseWriter, r *http.Request) {
     taskInfo, _ := io.ReadAll(r.Body)
+    stringTime := string(taskInfo)
     fmt.Println("got post request with task time: " + string(taskInfo))
 
-    taskDur, err := time.ParseDuration(string(taskInfo))
+    var taskDur time.Duration
 
-    if err != nil {
-        fmt.Fprintln(w, err.Error())
-        return
+    if len(stringTime) == 0 {
+        taskDur = time.Second
+    } else {
+        var err error
+        taskDur, err = time.ParseDuration(stringTime)
+
+        if err != nil {
+            w.WriteHeader(http.StatusBadRequest)
+            fmt.Fprintln(w, err.Error())
+            return
+        }
     }
 
     newUuid := uuid.New()
@@ -84,7 +113,9 @@ func (db *Database) postTaskHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Println("created task with id " + newUuid.String())
 
     go SleepAndComplete(db.tasks[newUuid], taskDur)
-    fmt.Fprintln(w, newUuid.String())
+
+    w.WriteHeader(http.StatusCreated)
+    fmt.Fprintln(w, "{\"task_id\": \"" + newUuid.String() + "\"}")
 }
 
 func createServer(db *Database, addr string) error {
@@ -105,7 +136,7 @@ func createServer(db *Database, addr string) error {
 
 func main() {
     db := newDatabase()
-    err := createServer(db, ":8080")
+    err := createServer(db, ":8000")
 
     if err != nil {
         _ = fmt.Errorf("%s", "failed to start: " + err.Error())
