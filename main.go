@@ -13,22 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Task struct {
-    id uuid.UUID
-    finished bool
-    result int
-}
-
-type Database struct {
-    tasks map[uuid.UUID]*Task
-}
-
-func newDatabase() *Database {
-    return &Database{
-        tasks: make(map[uuid.UUID]*Task),
-    }
-}
-
 func SleepAndComplete(t *Task, d time.Duration) {
     time.Sleep(d)
     fmt.Println("task finished with id " + t.id.String())
