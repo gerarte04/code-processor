@@ -2,77 +2,95 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
-	"main/domain"
-	"main/repository"
+	"http_server/repository"
+	"http_server/usecases"
+	"io"
 	"net/http"
+	"path"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type GetObjectHandlerRequest struct {
-	Key string `json:"key"`
+    Key uuid.UUID
+    ReqType int
 }
 
-func CreateGetObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
-	key := r.URL.Query().Get("key")
-	if key == "" {
-		return nil, fmt.Errorf("missing key")
-	}
-	return &GetObjectHandlerRequest{Key: key}, nil
+func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
+    str := path.Base(r.URL.Path)
+    key, err := uuid.Parse(str)
+
+    if err != nil {
+        return nil, ErrorInvalidKey
+    }
+
+    return &GetObjectHandlerRequest{Key: key, ReqType: usecases.GetResultQuery}, nil
 }
 
-type PutObjectHandlerRequest struct {
-	domain.Object
-}
+func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
+    str := path.Base(r.URL.Path)
+    key, err := uuid.Parse(str)
 
-func CreatePutObjectHandlerRequest(r *http.Request) (*PutObjectHandlerRequest, error) {
-	var req PutObjectHandlerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, fmt.Errorf("error while decoding json: %v", err)
-	}
-	return &req, nil
-}
+    if err != nil {
+        return nil, ErrorInvalidKey
+    }
 
-type DeleteObjectHandlerRequest struct {
-	Key string `json:"key"`
-}
-
-func CreateDeleteObjectHandlerRequest(r *http.Request) (*DeleteObjectHandlerRequest, error) {
-	key := r.URL.Query().Get("key")
-	if key == "" {
-		return nil, fmt.Errorf("missing key")
-	}
-	return &DeleteObjectHandlerRequest{Key: key}, nil
+    return &GetObjectHandlerRequest{Key: key, ReqType: usecases.GetStatusQuery}, nil
 }
 
 type PostObjectHandlerRequest struct {
-	domain.Object
+    Dur time.Duration
 }
 
 func CreatePostObjectHandlerRequest(r *http.Request) (*PostObjectHandlerRequest, error) {
-	var req PostObjectHandlerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, fmt.Errorf("error while decoding json: %v", err)
-	}
-	return &req, nil
+    str, _ := io.ReadAll(r.Body)
+
+    if len(str) == 0 {
+        return &PostObjectHandlerRequest{Dur: time.Second}, nil
+    }
+
+    dur, err := time.ParseDuration(string(str))
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &PostObjectHandlerRequest{Dur: dur}, nil
 }
 
-type GetObjectHandlerResponse struct {
-	Value *string `json:"value"`
+type GetResultObjectHandlerResponse struct {
+    Result string `json:"result"`
+}
+
+type GetStatusObjectHandlerResponse struct {
+    Status string `json:"status"`
+}
+
+type PostObjectHandlerResponse struct {
+    TaskId string `json:"task_id"`
 }
 
 func ProcessError(w http.ResponseWriter, err error, resp any) {
-	if err == repository.NotFound {
-		http.Error(w, "Key not found", http.StatusNotFound)
-		return
-	} else if err != nil {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
+    if err == usecases.ErrorTaskProcessing {
+        http.Error(w, err.Error(), http.StatusProcessing)
+        return
+    } else if err == repository.NotFound {
+        http.Error(w, "Key not found", http.StatusNotFound)
+    } else if err != nil {
+        http.Error(w, "Internal Error", http.StatusInternalServerError)
+        w.Write([]byte(err.Error()))
+        return
+    }
 
-	if resp != nil {
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, "Internal Error", http.StatusInternalServerError)
-		}
-	}
+    switch resp.(type) {
+    case *PostObjectHandlerResponse:
+        w.WriteHeader(http.StatusCreated)
+    }
+
+    if resp != nil {
+        if err := json.NewEncoder(w).Encode(resp); err != nil {
+            http.Error(w, "Internal Error", http.StatusInternalServerError)
+        }
+    }
 }

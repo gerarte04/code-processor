@@ -1,48 +1,57 @@
 package service
 
 import (
-	"errors"
-	"main/repository"
-	"main/usecases"
+	"http_server/repository"
+	"http_server/repository/task"
+	"http_server/usecases"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Object struct {
-	repo repository.Object
+    repo repository.Object
 }
 
 func NewObject(repo repository.Object) *Object {
-	return &Object{
-		repo: repo,
-	}
+    return &Object{
+        repo: repo,
+    }
 }
 
-func (rs *Object) Get(key uuid.UUID, queryType int) (any, error) {
-	task, err := rs.repo.Get(key)
+func (rs *Object) Get(key uuid.UUID, queryType int) (string, error) {
+    task, err := rs.repo.Get(key)
 
-	if err != nil {
-		return nil, err
-	} else if queryType == usecases.GetResultQuery {
-		if task.Finished {
-			return task.Result, nil
-		} else {
-			return nil, errors.New("task isn't finished yet")
-		}
-	} else if queryType == usecases.GetStatusQuery {
-		return task.Finished, nil
-	} else {
-		return nil, errors.New("unknown query type")
-	}
+    if err != nil {
+        return "", err
+    } else if queryType == usecases.GetResultQuery {
+        if task.Finished {
+            return strconv.Itoa(task.Result), nil
+        } else {
+            return "", usecases.ErrorTaskProcessing
+        }
+    } else if queryType == usecases.GetStatusQuery {
+        if task.Finished {
+            return "ready", nil
+        } else {
+            return "in_progress", nil
+        }
+    } else {
+        return "", usecases.ErrorUnknownQuery
+    }
 }
 
-func (rs *Object) Post(key uuid.UUID, value string) error {
-	dur, err := time.ParseDuration(value)
+func (rs *Object) Post(dur time.Duration) (string, error) {
+    key := uuid.New()
+    err := rs.repo.Post(key)
 
-	if err != nil {
-		return err
-	}
+    if err != nil {
+        return "", err
+    }
 
-	return rs.repo.Post(key, dur)
+    tsk, _ := rs.repo.Get(key)
+    go task.SleepAndComplete(tsk, dur)
+
+    return key.String(), nil
 }

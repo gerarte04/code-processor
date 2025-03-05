@@ -15,8 +15,9 @@ type Task struct {
 }
 
 func SleepAndComplete(t *Task, d time.Duration) {
+    fmt.Println("task started (id: " + t.Id.String() + ")")
     time.Sleep(d)
-    fmt.Println("task finished with id " + t.Id.String())
+    fmt.Println("task finished (id: " + t.Id.String() + ")")
 
     t.Result = rand.IntN(1000)
     t.Finished = true

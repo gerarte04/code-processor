@@ -1,9 +1,8 @@
 package database
 
 import (
-	"errors"
-	"main/repository/task"
-	"time"
+	"http_server/repository"
+	"http_server/repository/task"
 
 	"github.com/google/uuid"
 )
@@ -22,18 +21,16 @@ func (db *Object) Get(key uuid.UUID) (*task.Task, error) {
 	value, ok := db.tasks[key]
 
 	if !ok {
-		return nil, errors.New("key doesn't exists")
+		return nil, repository.NotFound
 	}
 
 	return value, nil
 }
 
-func (db *Object) Post(key uuid.UUID, dur time.Duration) error {
+func (db *Object) Post(key uuid.UUID) error {
 	db.tasks[key] = &task.Task{
 		Id: key,
 	}
-
-	go task.SleepAndComplete(db.tasks[key], dur)
 
 	return nil
 }

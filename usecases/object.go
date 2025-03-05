@@ -1,8 +1,12 @@
 package usecases
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Object interface {
-	Get(key uuid.UUID, queryType int) (any, error)
-	Post(key uuid.UUID, value string) error
+    Get(key uuid.UUID, queryType int) (string, error)
+    Post(dur time.Duration) (string, error)
 }

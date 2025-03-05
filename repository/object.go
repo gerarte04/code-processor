@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"main/repository/task"
-	"time"
+	"http_server/repository/task"
 
 	"github.com/google/uuid"
 )
 
 type Object interface {
 	Get(key uuid.UUID) (*task.Task, error)
-	Post(key uuid.UUID, dur time.Duration) error
+	Post(key uuid.UUID) error
 }
