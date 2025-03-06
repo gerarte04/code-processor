@@ -18,6 +18,16 @@ func NewHandler(service usecases.Object) *Object {
     return &Object{service: service}
 }
 
+// @Description get result
+// @Tags task
+// @Produce json
+// @Param task_id path string true "Task id"
+// @Success 200 {object} types.GetResultObjectHandlerResponse
+// @Success 102 {string} string "Processing"
+// @Failure 400 {string} string "Bad request"
+// @Failure 404 {string} string "Object not found"
+// @Failure 500 {string} string "Internal error"
+// @Router /result/{task_id} [get]
 func (s *Object) getResultHandler(w http.ResponseWriter, r *http.Request) {
     req, err := types.CreateGetResultObjectHandlerRequest(r)
 
@@ -33,6 +43,15 @@ func (s *Object) getResultHandler(w http.ResponseWriter, r *http.Request) {
     types.ProcessError(w, err, resp)
 }
 
+// @Description get status
+// @Tags task
+// @Produce json
+// @Param task_id path string true "Task id"
+// @Success 200 {object} types.GetStatusObjectHandlerResponse
+// @Failure 400 {string} string "Bad request"
+// @Failure 404 {string} string "Object not found"
+// @Failure 500 {string} string "Internal error"
+// @Router /status/{task_id} [get]
 func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
     req, err := types.CreateGetStatusObjectHandlerRequest(r)
 
@@ -48,6 +67,16 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
     types.ProcessError(w, err, resp)
 }
 
+// @Description post task
+// @Tags task
+// @Accept  json
+// @Produce json
+// @Param duration body string true "Task duration"
+// @Success 201 {object} types.PostObjectHandlerResponse
+// @Failure 400 {string} string "Bad request"
+// @Failure 404 {string} string "Object not found"
+// @Failure 500 {string} string "Internal error"
+// @Router /task [post]
 func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
     req, err := types.CreatePostTaskObjectHandlerRequest(r)
     if err != nil {

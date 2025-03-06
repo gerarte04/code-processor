@@ -1,0 +1,122 @@
+basePath: /
+definitions:
+  types.GetResultObjectHandlerResponse:
+    properties:
+      result:
+        type: integer
+    type: object
+  types.GetStatusObjectHandlerResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  types.PostObjectHandlerResponse:
+    properties:
+      task_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server.
+  title: My API
+  version: "1.0"
+paths:
+  /result/{task_id}:
+    get:
+      description: get result
+      parameters:
+      - description: Task id
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "102":
+          description: Processing
+          schema:
+            type: string
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetResultObjectHandlerResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "404":
+          description: Object not found
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      tags:
+      - task
+  /status/{task_id}:
+    get:
+      description: get status
+      parameters:
+      - description: Task id
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GetStatusObjectHandlerResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "404":
+          description: Object not found
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      tags:
+      - task
+  /task:
+    post:
+      consumes:
+      - application/json
+      description: post task
+      parameters:
+      - description: Task duration
+        in: body
+        name: duration
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.PostObjectHandlerResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "404":
+          description: Object not found
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      tags:
+      - task
+swagger: "2.0"

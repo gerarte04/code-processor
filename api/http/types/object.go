@@ -74,25 +74,30 @@ type PostTaskObjectHandlerRequest struct {
 }
 
 func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandlerRequest, error) {
+	sessionId, err := GetSessionId(r)
+
+	if err != nil {
+		return nil, err
+	}
+
     str, _ := io.ReadAll(r.Body)
+    mp := make(map[string]string)
 
     if len(str) == 0 {
         return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
     }
 
-    dur, err := time.ParseDuration(string(str))
-
-    if err != nil {
+    if err := json.Unmarshal([]byte(str), &mp); err != nil {
         return nil, err
-    }
-
-    sessionId, err := GetSessionId(r)
-
-    if err != nil {
+    } else if d, ok := mp["duration"]; !ok {
+        return nil, ErrorNotFoundPath
+    } else if len(d) == 0 {
+        return &PostTaskObjectHandlerRequest{Dur: time.Second, SessionId: sessionId}, nil
+    } else if dur, err := time.ParseDuration(d); err != nil {
         return nil, err
+    } else {
+        return &PostTaskObjectHandlerRequest{Dur: dur, SessionId: sessionId}, nil
     }
-
-    return &PostTaskObjectHandlerRequest{Dur: dur, SessionId: sessionId}, nil
 }
 
 type PostUserObjectHandlerRequest struct {
