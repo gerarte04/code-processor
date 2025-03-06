@@ -15,6 +15,7 @@ type Object struct {
 func NewDatabase() (*Object) {
 	return &Object {
 		tasks: make(map[uuid.UUID]*models.Task),
+		users: make(map[uuid.UUID]*models.User),
 	}
 }
 
@@ -44,6 +45,20 @@ func (db *Object) GetUser(key uuid.UUID) (*models.User, error) {
 	}
 
 	return value, nil
+}
+
+func (db *Object) GetUserByCred(login string, password string) (*models.User, error) {
+	for _, v := range db.users {
+		if v.Login == login {
+			if v.Password == password {
+				return v, nil
+			} else {
+				return nil, repository.ErrorWrongPassword
+			}
+		}
+	}
+
+	return nil, repository.ErrorUserNotFound
 }
 
 func (db *Object) PostUser(key uuid.UUID, login string, password string) error {

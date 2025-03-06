@@ -27,7 +27,7 @@ func (s *Object) getResultHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    value, err := s.service.GetTask(req.Key)
+    value, err := s.service.GetTask(req.Key, req.SessionId)
     resp, err := types.CreateGetResultObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -42,23 +42,45 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    value, err := s.service.GetTask(req.Key)
+    value, err := s.service.GetTask(req.Key, req.SessionId)
     resp, err := types.CreateGetStatusObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
 }
 
-func (s *Object) postHandler(w http.ResponseWriter, r *http.Request) {
-    req, err := types.CreatePostObjectHandlerRequest(r)
+func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
+    req, err := types.CreatePostTaskObjectHandlerRequest(r)
     if err != nil {
         http.Error(w, "Bad request", http.StatusBadRequest)
         w.Write([]byte(err.Error()))
         return
     }
-    value, err := s.service.PostTask(req.Dur)
-    resp, err := types.CreatePostObjectHandlerResponse(value, err)
+    value, err := s.service.PostTask(req.Dur, req.SessionId)
+    resp, err := types.CreatePostTaskObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
+}
+
+func (s *Object) postRegisterHandler(w http.ResponseWriter, r *http.Request) {
+    req, err := types.CreatePostUserObjectHandlerRequest(r)
+    if err != nil {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return
+    }
+    err = s.service.RegisterUser(req.Login, req.Password)
+    types.ProcessErrorPostUser(w, err, nil)
+}
+
+func (s *Object) postLoginHandler(w http.ResponseWriter, r *http.Request) {
+    req, err := types.CreatePostUserObjectHandlerRequest(r)
+    if err != nil {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return
+    }
+    value, err := s.service.LoginUser(req.Login, req.Password)
+    types.ProcessErrorPostUser(w, err, &types.PostUserObjectHandlerResponse{SessionId: value})
 }
 
 // WithObjectHandlers registers object-related HTTP handlers.
@@ -66,6 +88,8 @@ func (s *Object) WithObjectHandlers(r chi.Router) {
     r.Route("/", func(r chi.Router) {
         r.Get("/result/*", s.getResultHandler)
         r.Get("/status/*", s.getStatusHandler)
-        r.Post("/task", s.postHandler)
+        r.Post("/task", s.postTaskHandler)
+        r.Post("/register", s.postRegisterHandler)
+        r.Post("/login", s.postLoginHandler)
     })
 }

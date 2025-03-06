@@ -13,8 +13,25 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+    sessionIdCookieName = "goSessionId"
+)
+
+func GetSessionId(r *http.Request) (string, error) {
+    cookie, err := r.Cookie(sessionIdCookieName)
+
+    if err == http.ErrNoCookie {
+        return "", ErrorUnauthorized
+    } else if err != nil {
+        return "", ErrorBadCookie
+    }
+
+    return cookie.Value, nil
+}
+
 type GetObjectHandlerRequest struct {
     Key uuid.UUID
+    SessionId string
 }
 
 func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -25,7 +42,13 @@ func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    return &GetObjectHandlerRequest{Key: key}, nil
+    sessionId, err := GetSessionId(r)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &GetObjectHandlerRequest{Key: key, SessionId: sessionId}, nil
 }
 
 func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -36,18 +59,25 @@ func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    return &GetObjectHandlerRequest{Key: key}, nil
+    sessionId, err := GetSessionId(r)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &GetObjectHandlerRequest{Key: key, SessionId: sessionId}, nil
 }
 
-type PostObjectHandlerRequest struct {
+type PostTaskObjectHandlerRequest struct {
     Dur time.Duration
+    SessionId string
 }
 
-func CreatePostObjectHandlerRequest(r *http.Request) (*PostObjectHandlerRequest, error) {
+func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandlerRequest, error) {
     str, _ := io.ReadAll(r.Body)
 
     if len(str) == 0 {
-        return &PostObjectHandlerRequest{Dur: time.Second}, nil
+        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
     }
 
     dur, err := time.ParseDuration(string(str))
@@ -56,7 +86,34 @@ func CreatePostObjectHandlerRequest(r *http.Request) (*PostObjectHandlerRequest,
         return nil, err
     }
 
-    return &PostObjectHandlerRequest{Dur: dur}, nil
+    sessionId, err := GetSessionId(r)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &PostTaskObjectHandlerRequest{Dur: dur, SessionId: sessionId}, nil
+}
+
+type PostUserObjectHandlerRequest struct {
+    Login string `json:"username"`
+    Password string `json:"password"`
+}
+
+func CreatePostUserObjectHandlerRequest(r *http.Request) (*PostUserObjectHandlerRequest, error) {
+    str, err := io.ReadAll(r.Body)
+
+    if err != nil {
+        return nil, err
+    }
+
+    var req PostUserObjectHandlerRequest
+
+    if err = json.Unmarshal([]byte(str), &req); err != nil {
+        return nil, err
+    }
+
+    return &req, nil
 }
 
 type GetResultObjectHandlerResponse struct {
@@ -67,8 +124,12 @@ type GetStatusObjectHandlerResponse struct {
     Status string `json:"status"`
 }
 
-type PostObjectHandlerResponse struct {
+type PostTaskObjectHandlerResponse struct {
     TaskId string `json:"task_id"`
+}
+
+type PostUserObjectHandlerResponse struct {
+    SessionId string
 }
 
 func CreateGetResultObjectHandlerResponse(value *models.Task, err error) (*GetResultObjectHandlerResponse, error) {
@@ -93,12 +154,12 @@ func CreateGetStatusObjectHandlerResponse(value *models.Task, err error) (*GetSt
     }
 }
 
-func CreatePostObjectHandlerResponse(value *uuid.UUID, err error) (*PostObjectHandlerResponse, error) {
+func CreatePostTaskObjectHandlerResponse(value *uuid.UUID, err error) (*PostTaskObjectHandlerResponse, error) {
     if err != nil {
         return nil, err
     }
 
-    return &PostObjectHandlerResponse{TaskId: value.String()}, nil
+    return &PostTaskObjectHandlerResponse{TaskId: value.String()}, nil
 }
 
 func ProcessError(w http.ResponseWriter, err error, resp any) {
@@ -107,6 +168,8 @@ func ProcessError(w http.ResponseWriter, err error, resp any) {
         return
     } else if err == repository.ErrorTaskNotFound {
         http.Error(w, "Key not found", http.StatusNotFound)
+    } else if err == ErrorUnauthorized || err == usecases.ErrorNoSessionExists || err == usecases.ErrorSessionExpired {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
     } else if err != nil {
         http.Error(w, "Internal Error", http.StatusInternalServerError)
         w.Write([]byte(err.Error()))
@@ -114,7 +177,7 @@ func ProcessError(w http.ResponseWriter, err error, resp any) {
     }
 
     switch resp.(type) {
-    case *PostObjectHandlerResponse:
+    case *PostTaskObjectHandlerResponse:
         w.WriteHeader(http.StatusCreated)
     }
 
@@ -122,5 +185,17 @@ func ProcessError(w http.ResponseWriter, err error, resp any) {
         if err := json.NewEncoder(w).Encode(resp); err != nil {
             http.Error(w, "Internal Error", http.StatusInternalServerError)
         }
+    }
+}
+
+func ProcessErrorPostUser(w http.ResponseWriter, err error, resp *PostUserObjectHandlerResponse) {
+    if err != nil {
+        http.Error(w, "Internal Error", http.StatusInternalServerError)
+        w.Write([]byte(err.Error()))
+        return
+    }
+
+    if resp != nil {
+        http.SetCookie(w, &http.Cookie{Name: sessionIdCookieName, Value: resp.SessionId})
     }
 }

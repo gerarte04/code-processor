@@ -7,6 +7,7 @@ import (
 	pkgHttp "http_server/pkg/http"
 	"http_server/repository/database"
 	"http_server/usecases/service"
+	"http_server/usecases/sessions"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -16,7 +17,7 @@ func main() {
     flag.Parse()
 
     db := database.NewDatabase()
-    service := service.NewObject(db)
+    service := service.NewObject(db, sessions.NewSessionManager())
     handler := http.NewHandler(service)
     
     r := chi.NewRouter()
