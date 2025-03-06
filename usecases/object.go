@@ -1,12 +1,13 @@
 package usecases
 
 import (
+	"http_server/repository/models"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Object interface {
-    Get(key uuid.UUID, queryType int) (string, error)
-    Post(dur time.Duration) (string, error)
+    GetTask(key uuid.UUID) (*models.Task, error)
+    PostTask(dur time.Duration) (*uuid.UUID, error)
 }

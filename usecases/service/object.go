@@ -1,10 +1,9 @@
 package service
 
 import (
+	"http_server/pkg/process"
 	"http_server/repository"
-	"http_server/repository/task"
-	"http_server/usecases"
-	"strconv"
+	"http_server/repository/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,38 +19,26 @@ func NewObject(repo repository.Object) *Object {
     }
 }
 
-func (rs *Object) Get(key uuid.UUID, queryType int) (string, error) {
-    task, err := rs.repo.Get(key)
+func (rs *Object) GetTask(key uuid.UUID) (*models.Task, error) {
+    task, err := rs.repo.GetTask(key)
 
     if err != nil {
-        return "", err
-    } else if queryType == usecases.GetResultQuery {
-        if task.Finished {
-            return strconv.Itoa(task.Result), nil
-        } else {
-            return "", usecases.ErrorTaskProcessing
-        }
-    } else if queryType == usecases.GetStatusQuery {
-        if task.Finished {
-            return "ready", nil
-        } else {
-            return "in_progress", nil
-        }
-    } else {
-        return "", usecases.ErrorUnknownQuery
+        return nil, err
     }
+
+    return task, nil
 }
 
-func (rs *Object) Post(dur time.Duration) (string, error) {
+func (rs *Object) PostTask(dur time.Duration) (*uuid.UUID, error) {
     key := uuid.New()
-    err := rs.repo.Post(key)
+    err := rs.repo.PostTask(key)
 
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    tsk, _ := rs.repo.Get(key)
-    go task.SleepAndComplete(tsk, dur)
+    tsk, _ := rs.repo.GetTask(key)
+    go process.SleepAndComplete(tsk, dur)
 
-    return key.String(), nil
+    return &key, nil
 }

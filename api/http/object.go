@@ -20,24 +20,32 @@ func NewHandler(service usecases.Object) *Object {
 
 func (s *Object) getResultHandler(w http.ResponseWriter, r *http.Request) {
     req, err := types.CreateGetResultObjectHandlerRequest(r)
+
     if err != nil {
         http.Error(w, "Bad request", http.StatusBadRequest)
         w.Write([]byte(err.Error()))
         return
     }
-    value, err := s.service.Get(req.Key, req.ReqType)
-    types.ProcessError(w, err, &types.GetResultObjectHandlerResponse{Result: value})
+
+    value, err := s.service.GetTask(req.Key)
+    resp, err := types.CreateGetResultObjectHandlerResponse(value, err)
+
+    types.ProcessError(w, err, resp)
 }
 
 func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
     req, err := types.CreateGetStatusObjectHandlerRequest(r)
+
     if err != nil {
         http.Error(w, "Bad request", http.StatusBadRequest)
         w.Write([]byte(err.Error()))
         return
     }
-    value, err := s.service.Get(req.Key, req.ReqType)
-    types.ProcessError(w, err, &types.GetStatusObjectHandlerResponse{Status: value})
+
+    value, err := s.service.GetTask(req.Key)
+    resp, err := types.CreateGetStatusObjectHandlerResponse(value, err)
+
+    types.ProcessError(w, err, resp)
 }
 
 func (s *Object) postHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,8 +55,10 @@ func (s *Object) postHandler(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte(err.Error()))
         return
     }
-    value, err := s.service.Post(req.Dur)
-    types.ProcessError(w, err, &types.PostObjectHandlerResponse{TaskId: value})
+    value, err := s.service.PostTask(req.Dur)
+    resp, err := types.CreatePostObjectHandlerResponse(value, err)
+
+    types.ProcessError(w, err, resp)
 }
 
 // WithObjectHandlers registers object-related HTTP handlers.

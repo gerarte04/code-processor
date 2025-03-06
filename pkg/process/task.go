@@ -1,20 +1,13 @@
-package task
+package process
 
 import (
 	"fmt"
+	"http_server/repository/models"
 	"math/rand/v2"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-type Task struct {
-    Id uuid.UUID
-    Finished bool
-    Result int
-}
-
-func SleepAndComplete(t *Task, d time.Duration) {
+func SleepAndComplete(t *models.Task, d time.Duration) {
     fmt.Println("task started (id: " + t.Id.String() + ")")
     time.Sleep(d)
     fmt.Println("task finished (id: " + t.Id.String() + ")")

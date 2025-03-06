@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"http_server/repository"
+	"http_server/repository/models"
 	"http_server/usecases"
 	"io"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 
 type GetObjectHandlerRequest struct {
     Key uuid.UUID
-    ReqType int
 }
 
 func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -25,7 +25,7 @@ func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    return &GetObjectHandlerRequest{Key: key, ReqType: usecases.GetResultQuery}, nil
+    return &GetObjectHandlerRequest{Key: key}, nil
 }
 
 func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -36,7 +36,7 @@ func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    return &GetObjectHandlerRequest{Key: key, ReqType: usecases.GetStatusQuery}, nil
+    return &GetObjectHandlerRequest{Key: key}, nil
 }
 
 type PostObjectHandlerRequest struct {
@@ -60,7 +60,7 @@ func CreatePostObjectHandlerRequest(r *http.Request) (*PostObjectHandlerRequest,
 }
 
 type GetResultObjectHandlerResponse struct {
-    Result string `json:"result"`
+    Result int `json:"result"`
 }
 
 type GetStatusObjectHandlerResponse struct {
@@ -71,11 +71,41 @@ type PostObjectHandlerResponse struct {
     TaskId string `json:"task_id"`
 }
 
+func CreateGetResultObjectHandlerResponse(value *models.Task, err error) (*GetResultObjectHandlerResponse, error) {
+    if err != nil {
+        return nil, err
+    } else if !value.Finished {
+        return nil, usecases.ErrorTaskProcessing
+    }
+
+    return &GetResultObjectHandlerResponse{Result: value.Result}, nil
+}
+
+func CreateGetStatusObjectHandlerResponse(value *models.Task, err error) (*GetStatusObjectHandlerResponse, error) {
+    if err != nil {
+        return nil, err
+    }
+
+    if value.Finished {
+        return &GetStatusObjectHandlerResponse{Status: "ready"}, nil
+    } else {
+        return &GetStatusObjectHandlerResponse{Status: "in_progress"}, nil
+    }
+}
+
+func CreatePostObjectHandlerResponse(value *uuid.UUID, err error) (*PostObjectHandlerResponse, error) {
+    if err != nil {
+        return nil, err
+    }
+
+    return &PostObjectHandlerResponse{TaskId: value.String()}, nil
+}
+
 func ProcessError(w http.ResponseWriter, err error, resp any) {
     if err == usecases.ErrorTaskProcessing {
         http.Error(w, err.Error(), http.StatusProcessing)
         return
-    } else if err == repository.NotFound {
+    } else if err == repository.ErrorTaskNotFound {
         http.Error(w, "Key not found", http.StatusNotFound)
     } else if err != nil {
         http.Error(w, "Internal Error", http.StatusInternalServerError)
