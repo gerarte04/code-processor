@@ -6,7 +6,8 @@ import (
 	"http_server/api/http"
 	_ "http_server/docs"
 	pkgHttp "http_server/pkg/http"
-	"http_server/repository/database"
+	"http_server/repository/tasks"
+	"http_server/repository/users"
 	"http_server/usecases/service"
 	"http_server/usecases/sessions"
 
@@ -24,8 +25,10 @@ func main() {
     addr := flag.String("port", ":8080", "specify listening port")
     flag.Parse()
 
-    db := database.NewDatabase()
-    service := service.NewObject(db, sessions.NewSessionManager())
+    tasksRepo := tasks.NewTasksRepo()
+    usersRepo := users.NewUsersRepo()
+	sessMgr := sessions.NewSessionManager()
+    service := service.NewObject(tasksRepo, usersRepo, sessMgr)
     handler := http.NewHandler(service)
     
     r := chi.NewRouter()
