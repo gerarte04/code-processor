@@ -22,7 +22,12 @@ func NewSessionManager() *SessionManager {
 func (sm *SessionManager) StartSession(userId uuid.UUID, expiresAt time.Time) (*models.Session, error) {
 	for _, v := range sm.sessions {
 		if v.UserId == userId {
-			return nil, usecases.ErrorUserSessionExists
+			if time.Now().After(v.ExpiresAt) {
+				sm.StopSession(v.SessionId)
+				break
+			} else {
+				return nil, usecases.ErrorUserSessionExists
+			}
 		}
 	}
 

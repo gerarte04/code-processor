@@ -65,7 +65,7 @@ func (rs *Object) RegisterUser(login string, password string) error {
 func (rs *Object) LoginUser(login string, password string) (string, error) {
     if user, err := rs.repo.GetUserByCred(login, password); err != nil {
         return "", err
-    } else if sess, err := rs.sessMgr.StartSession(user.Id, time.Now().Add(time.Minute)); err != nil {
+    } else if sess, err := rs.sessMgr.StartSession(user.Id, time.Now().Add(30 * time.Minute)); err != nil {
         return "", err
     } else {
         return sess.SessionId, nil

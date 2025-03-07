@@ -8,25 +8,37 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 const (
-    sessionIdCookieName = "goSessionId"
+    sessionIdHeaderName = "Authorization"
 )
 
 func GetSessionId(r *http.Request) (string, error) {
-    cookie, err := r.Cookie(sessionIdCookieName)
-
-    if err == http.ErrNoCookie {
+    value := strings.Split(r.Header.Get(sessionIdHeaderName), " ")
+    
+    if len(value) != 2 || value[0] != "Bearer" {
         return "", ErrorUnauthorized
-    } else if err != nil {
-        return "", ErrorBadCookie
     }
 
-    return cookie.Value, nil
+    return value[1], nil
+}
+
+func ProcessCreateError(w http.ResponseWriter, err error) error {
+    if err == ErrorUnauthorized {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return err
+    } else if err != nil {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return err
+    }
+
+    return nil
 }
 
 type GetObjectHandlerRequest struct {
@@ -80,18 +92,23 @@ func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandler
 		return nil, err
 	}
 
-    str, _ := io.ReadAll(r.Body)
-    mp := make(map[string]string)
+    str, err := io.ReadAll(r.Body)
 
-    if len(str) == 0 {
-        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
+    if err != nil {
+        return nil, err
+    } else if len(str) == 0 {
+        return &PostTaskObjectHandlerRequest{Dur: time.Second, SessionId: sessionId}, nil
     }
 
-    if err := json.Unmarshal([]byte(str), &mp); err != nil {
+    mp := make(map[string]string)
+
+    if err := json.Unmarshal(str, &mp); err != nil {
         return nil, err
-    } else if d, ok := mp["duration"]; !ok {
-        return nil, ErrorNotFoundPath
-    } else if len(d) == 0 {
+    }
+
+    d, ok := mp["duration"]
+
+    if !ok || len(d) == 0 {
         return &PostTaskObjectHandlerRequest{Dur: time.Second, SessionId: sessionId}, nil
     } else if dur, err := time.ParseDuration(d); err != nil {
         return nil, err
@@ -133,8 +150,10 @@ type PostTaskObjectHandlerResponse struct {
     TaskId string `json:"task_id"`
 }
 
-type PostUserObjectHandlerResponse struct {
-    SessionId string
+type PostUserRegisterObjectHandlerResponse struct {}
+
+type PostUserLoginObjectHandlerResponse struct {
+    SessionId string `json:"token"`
 }
 
 func CreateGetResultObjectHandlerResponse(value *models.Task, err error) (*GetResultObjectHandlerResponse, error) {
@@ -169,12 +188,21 @@ func CreatePostTaskObjectHandlerResponse(value *uuid.UUID, err error) (*PostTask
 
 func ProcessError(w http.ResponseWriter, err error, resp any) {
     if err == usecases.ErrorTaskProcessing {
-        http.Error(w, err.Error(), http.StatusProcessing)
+        w.WriteHeader(http.StatusProcessing)
+        w.Write([]byte(err.Error()))
         return
-    } else if err == repository.ErrorTaskNotFound {
-        http.Error(w, "Key not found", http.StatusNotFound)
+    } else if err == repository.ErrorTaskNotFound || err == ErrorNotFoundPath {
+        http.Error(w, "Not Found", http.StatusNotFound)
+        w.Write([]byte(err.Error()))
+        return
     } else if err == ErrorUnauthorized || err == usecases.ErrorNoSessionExists || err == usecases.ErrorSessionExpired {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        w.Write([]byte(err.Error()))
+        return
+    } else if err == ErrorInvalidKey {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return
     } else if err != nil {
         http.Error(w, "Internal Error", http.StatusInternalServerError)
         w.Write([]byte(err.Error()))
@@ -193,14 +221,27 @@ func ProcessError(w http.ResponseWriter, err error, resp any) {
     }
 }
 
-func ProcessErrorPostUser(w http.ResponseWriter, err error, resp *PostUserObjectHandlerResponse) {
-    if err != nil {
+func ProcessErrorPostUser(w http.ResponseWriter, err error, resp any) {
+    if err == repository.ErrorUserAlreadyExists || err == repository.ErrorUserNotFound {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        w.Write([]byte(err.Error()))
+        return
+    } else if err == repository.ErrorWrongPassword || err == usecases.ErrorUserSessionExists {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+        w.Write([]byte(err.Error()))
+        return
+    } else if err != nil {
         http.Error(w, "Internal Error", http.StatusInternalServerError)
         w.Write([]byte(err.Error()))
         return
     }
 
-    if resp != nil {
-        http.SetCookie(w, &http.Cookie{Name: sessionIdCookieName, Value: resp.SessionId})
+    switch resp.(type) {
+    case *PostUserRegisterObjectHandlerResponse:
+        w.WriteHeader(http.StatusCreated)
+    case *PostUserLoginObjectHandlerResponse:
+        if err := json.NewEncoder(w).Encode(resp); err != nil {
+            http.Error(w, "Internal Error", http.StatusInternalServerError)
+        }
     }
 }

@@ -10,10 +10,24 @@ definitions:
       status:
         type: string
     type: object
-  types.PostObjectHandlerResponse:
+  types.PostTaskObjectHandlerResponse:
     properties:
       task_id:
         type: string
+    type: object
+  types.PostUserLoginObjectHandlerResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  types.PostUserObjectHandlerRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  types.PostUserRegisterObjectHandlerResponse:
     type: object
 host: localhost:8080
 info:
@@ -22,6 +36,72 @@ info:
   title: My API
   version: "1.0"
 paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: post login
+      parameters:
+      - description: login and password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.PostUserObjectHandlerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.PostUserLoginObjectHandlerResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "404":
+          description: Object not found
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      tags:
+      - user
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: post register
+      parameters:
+      - description: login and password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.PostUserObjectHandlerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.PostUserRegisterObjectHandlerResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "404":
+          description: Object not found
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      tags:
+      - user
   /result/{task_id}:
     get:
       description: get result
@@ -29,6 +109,11 @@ paths:
       - description: Task id
         in: path
         name: task_id
+        required: true
+        type: string
+      - description: Authorization token
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -65,6 +150,11 @@ paths:
         name: task_id
         required: true
         type: string
+      - description: Authorization token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -98,13 +188,18 @@ paths:
         required: true
         schema:
           type: string
+      - description: Authorization token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/types.PostObjectHandlerResponse'
+            $ref: '#/definitions/types.PostTaskObjectHandlerResponse'
         "400":
           description: Bad request
           schema:
