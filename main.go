@@ -1,15 +1,17 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"http_server/api/http"
+	"http_server/config"
 	_ "http_server/docs"
+	"http_server/middlewares/auth"
 	pkgHttp "http_server/pkg/http"
-	"http_server/repository/tasks"
-	"http_server/repository/users"
-	"http_server/usecases/service"
+	tasksRepo "http_server/repository/tasks"
+	usersRepo "http_server/repository/users"
 	"http_server/usecases/sessions"
+	tasksService "http_server/usecases/tasks"
+	usersService "http_server/usecases/users"
 
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -22,20 +24,23 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-    addr := flag.String("port", ":8080", "specify listening port")
-    flag.Parse()
+    appFlags := config.ParseFlags()
+    var cfg config.HttpConfig
+    config.LoadConfig(appFlags.ConfigPath, &cfg)
 
-    tasksRepo := tasks.NewTasksRepo()
-    usersRepo := users.NewUsersRepo()
-	sessMgr := sessions.NewSessionManager()
-    service := service.NewObject(tasksRepo, usersRepo, sessMgr)
-    handler := http.NewHandler(service)
+    tasksRepo := tasksRepo.NewTasksRepo()
+    usersRepo := usersRepo.NewUsersRepo()
+    sessMgr := sessions.NewSessionManager(cfg.SessionLivingTime)
+    tasksService := tasksService.NewObject(tasksRepo)
+    usersService := usersService.NewObject(usersRepo, sessMgr)
+    handler := http.NewHandler(tasksService, usersService)
+    authMiddleware := auth.NewObject(sessMgr)
     
     r := chi.NewRouter()
+    r.Use(authMiddleware.Authenticate)
     r.Get("/swagger/*", httpSwagger.WrapHandler)
     handler.WithObjectHandlers(r)
-
-    err := pkgHttp.CreateServer(*addr, r)
+    err := pkgHttp.CreateServer(cfg.Host + ":" + cfg.Port, r)
 
     if err != nil {
         _ = fmt.Errorf("%s", "failed to start: " + err.Error())

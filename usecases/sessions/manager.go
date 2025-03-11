@@ -11,15 +11,17 @@ import (
 
 type SessionManager struct {
 	sessions map[string]*models.Session
+	sessionLivingTime time.Duration
 }
 
-func NewSessionManager() *SessionManager {
+func NewSessionManager(sessionLivingTime time.Duration) *SessionManager {
 	return &SessionManager{
 		sessions: make(map[string]*models.Session),
+		sessionLivingTime: sessionLivingTime,
 	}
 }
 
-func (sm *SessionManager) StartSession(userId uuid.UUID, expiresAt time.Time) (*models.Session, error) {
+func (sm *SessionManager) StartSession(userId uuid.UUID) (*models.Session, error) {
 	for _, v := range sm.sessions {
 		if v.UserId == userId {
 			if time.Now().After(v.ExpiresAt) {
@@ -36,7 +38,7 @@ func (sm *SessionManager) StartSession(userId uuid.UUID, expiresAt time.Time) (*
 	sm.sessions[newId] = &models.Session{
 		UserId: userId,
 		SessionId: newId,
-		ExpiresAt: expiresAt,
+		ExpiresAt: time.Now().Add(sm.sessionLivingTime),
 	}
 	return sm.sessions[newId], nil
 }

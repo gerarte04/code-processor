@@ -10,12 +10,16 @@ import (
 
 // Object represents an HTTP handler for managing objects.
 type Object struct {
-    service usecases.Object
+    tasksService usecases.TasksService
+    usersService usecases.UsersService
 }
 
 // NewHandler creates a new instance of Object.
-func NewHandler(service usecases.Object) *Object {
-    return &Object{service: service}
+func NewHandler(tasksService usecases.TasksService, usersService usecases.UsersService) *Object {
+    return &Object{
+        tasksService: tasksService,
+        usersService: usersService,
+    }
 }
 
 // @Description get result
@@ -35,7 +39,7 @@ func (s *Object) getResultHandler(w http.ResponseWriter, r *http.Request) {
         return
     }         
 
-    value, err := s.service.GetTask(req.Key, req.SessionId)
+    value, err := s.tasksService.GetTask(req.Key)
     resp, err := types.CreateGetResultObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -57,7 +61,7 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
         return
     }  
 
-    value, err := s.service.GetTask(req.Key, req.SessionId)
+    value, err := s.tasksService.GetTask(req.Key)
     resp, err := types.CreateGetStatusObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -80,7 +84,7 @@ func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
         return
     }  
 
-    value, err := s.service.PostTask(req.Dur, req.SessionId)
+    value, err := s.tasksService.PostTask(req.Dur)
     resp, err := types.CreatePostTaskObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -102,7 +106,7 @@ func (s *Object) postRegisterHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    err = s.service.RegisterUser(req.Login, req.Password)
+    err = s.usersService.RegisterUser(req.Login, req.Password)
     types.ProcessErrorPostUser(w, err, &types.PostUserRegisterObjectHandlerResponse{})
 }
 
@@ -122,7 +126,7 @@ func (s *Object) postLoginHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    value, err := s.service.LoginUser(req.Login, req.Password)
+    value, err := s.usersService.LoginUser(req.Login, req.Password)
     types.ProcessErrorPostUser(w, err, &types.PostUserLoginObjectHandlerResponse{SessionId: value})
 }
 

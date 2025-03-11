@@ -8,31 +8,13 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-const (
-    sessionIdHeaderName = "Authorization"
-)
-
-func GetSessionId(r *http.Request) (string, error) {
-    value := strings.Split(r.Header.Get(sessionIdHeaderName), " ")
-    
-    if len(value) != 2 || value[0] != "Bearer" {
-        return "", ErrorUnauthorized
-    }
-
-    return value[1], nil
-}
-
 func ProcessCreateError(w http.ResponseWriter, err error) error {
-    if err == ErrorUnauthorized {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return err
-    } else if err != nil {
+    if err != nil {
         http.Error(w, "Bad request", http.StatusBadRequest)
         w.Write([]byte(err.Error()))
         return err
@@ -43,7 +25,6 @@ func ProcessCreateError(w http.ResponseWriter, err error) error {
 
 type GetObjectHandlerRequest struct {
     Key uuid.UUID
-    SessionId string
 }
 
 func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -54,13 +35,7 @@ func CreateGetResultObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    sessionId, err := GetSessionId(r)
-
-    if err != nil {
-        return nil, err
-    }
-
-    return &GetObjectHandlerRequest{Key: key, SessionId: sessionId}, nil
+    return &GetObjectHandlerRequest{Key: key}, nil
 }
 
 func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequest, error) {
@@ -71,33 +46,18 @@ func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
         return nil, ErrorInvalidKey
     }
 
-    sessionId, err := GetSessionId(r)
-
-    if err != nil {
-        return nil, err
-    }
-
-    return &GetObjectHandlerRequest{Key: key, SessionId: sessionId}, nil
+    return &GetObjectHandlerRequest{Key: key}, nil
 }
 
 type PostTaskObjectHandlerRequest struct {
     Dur time.Duration
-    SessionId string
 }
 
 func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandlerRequest, error) {
-	sessionId, err := GetSessionId(r)
+    str, _ := io.ReadAll(r.Body)
 
-	if err != nil {
-		return nil, err
-	}
-
-    str, err := io.ReadAll(r.Body)
-
-    if err != nil {
-        return nil, err
-    } else if len(str) == 0 {
-        return &PostTaskObjectHandlerRequest{Dur: time.Second, SessionId: sessionId}, nil
+    if len(str) == 0 {
+        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
     }
 
     mp := make(map[string]string)
@@ -109,11 +69,11 @@ func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandler
     d, ok := mp["duration"]
 
     if !ok || len(d) == 0 {
-        return &PostTaskObjectHandlerRequest{Dur: time.Second, SessionId: sessionId}, nil
+        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
     } else if dur, err := time.ParseDuration(d); err != nil {
         return nil, err
     } else {
-        return &PostTaskObjectHandlerRequest{Dur: dur, SessionId: sessionId}, nil
+        return &PostTaskObjectHandlerRequest{Dur: dur}, nil
     }
 }
 
