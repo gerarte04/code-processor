@@ -4,8 +4,6 @@ import (
 	"http_server/api/http/types"
 	"http_server/usecases"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // Object represents an HTTP handler for managing objects.
@@ -128,15 +126,4 @@ func (s *Object) postLoginHandler(w http.ResponseWriter, r *http.Request) {
 
     value, err := s.usersService.LoginUser(req.Login, req.Password)
     types.ProcessErrorPostUser(w, err, &types.PostUserLoginObjectHandlerResponse{SessionId: value})
-}
-
-// WithObjectHandlers registers object-related HTTP handlers.
-func (s *Object) WithObjectHandlers(r chi.Router) {
-    r.Route("/", func(r chi.Router) {
-        r.Get("/result/*", s.getResultHandler)
-        r.Get("/status/*", s.getStatusHandler)
-        r.Post("/task", s.postTaskHandler)
-        r.Post("/register", s.postRegisterHandler)
-        r.Post("/login", s.postLoginHandler)
-    })
 }

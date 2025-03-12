@@ -32,13 +32,6 @@ func GetSessionId(r *http.Request) (string, error) {
 
 func (am *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        path := strings.Split(r.URL.Path, "/")
-
-        if path[1] == "login" || path[1] == "register" || path[1] == "swagger" {
-            next.ServeHTTP(w, r)
-            return
-        }
-
         if sessId, err := GetSessionId(r); err != nil {
             http.Error(w, err.Error(), http.StatusUnauthorized)
             return

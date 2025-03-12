@@ -37,9 +37,12 @@ func main() {
     authMiddleware := auth.NewObject(sessMgr)
     
     r := chi.NewRouter()
-    r.Use(authMiddleware.Authenticate)
+    handler.RouteHandlers(r,
+        handler.WithFreeUserHandlers(r),
+        handler.WithSecuredUserHandlers(r, authMiddleware),
+    )
     r.Get("/swagger/*", httpSwagger.WrapHandler)
-    handler.WithObjectHandlers(r)
+
     err := pkgHttp.CreateServer(cfg.Host + ":" + cfg.Port, r)
 
     if err != nil {
