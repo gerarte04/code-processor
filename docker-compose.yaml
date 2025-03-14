@@ -1,0 +1,27 @@
+services:
+  http_server:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  broker:
+    image: "rabbitmq:3-management"
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  consumer:
+    build:
+      dockerfile: consumers/code_processor/Dockerfile
+    depends_on:
+      http_server:
+        condition: service_started

@@ -7,11 +7,13 @@ import (
 	_ "http_server/docs"
 	"http_server/middlewares/auth"
 	pkgHttp "http_server/pkg/http"
+	rabbMq "http_server/repository/rabbitmq"
 	tasksRepo "http_server/repository/tasks"
 	usersRepo "http_server/repository/users"
 	"http_server/usecases/sessions"
 	tasksService "http_server/usecases/tasks"
 	usersService "http_server/usecases/users"
+	"log"
 
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -31,7 +33,13 @@ func main() {
     tasksRepo := tasksRepo.NewTasksRepo()
     usersRepo := usersRepo.NewUsersRepo()
     sessMgr := sessions.NewSessionManager(cfg.SessionLivingTime)
-    tasksService := tasksService.NewObject(tasksRepo)
+
+    rabbitMQSender, err := rabbMq.NewRabbitMQSender("amqp://guest:guest@localhost:5672")
+    if err != nil {
+        log.Fatalf("%s", err.Error())
+    }
+
+    tasksService := tasksService.NewObject(tasksRepo, rabbitMQSender)
     usersService := usersService.NewObject(usersRepo, sessMgr)
     handler := http.NewHandler(tasksService, usersService)
     authMiddleware := auth.NewObject(sessMgr)
@@ -43,7 +51,7 @@ func main() {
     )
     r.Get("/swagger/*", httpSwagger.WrapHandler)
 
-    err := pkgHttp.CreateServer(cfg.Host + ":" + cfg.Port, r)
+    err = pkgHttp.CreateServer(cfg.Host + ":" + cfg.Port, r)
 
     if err != nil {
         _ = fmt.Errorf("%s", "failed to start: " + err.Error())

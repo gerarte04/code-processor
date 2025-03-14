@@ -2,6 +2,7 @@ package http
 
 import (
 	"http_server/api/http/types"
+	"http_server/repository/models"
 	"http_server/usecases"
 	"net/http"
 )
@@ -77,12 +78,12 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal error"
 // @Router /task [post]
 func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
-    req, err := types.CreatePostTaskObjectHandlerRequest(r)
+    _, err := types.CreatePostTaskObjectHandlerRequest(r)
     if err = types.ProcessCreateError(w, err); err != nil {
         return
     }  
 
-    value, err := s.tasksService.PostTask(req.Dur)
+    value, err := s.tasksService.PostTask(&models.Code{Translator: "python", Code: "fuck"})
     resp, err := types.CreatePostTaskObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)

@@ -16,3 +16,8 @@ type UsersRepo interface {
 	GetUserByCred(login string, password string) (*models.User, error)
 	PostUser(key uuid.UUID, login string, password string) error
 }
+
+type BrokerSender interface {
+	Send(*models.Code) error
+	Close()
+}

@@ -8,15 +8,12 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /build
 
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN go build main.go
+COPY ./consumers/code_processor/. .
+# RUN go install github.com/rabbitmq/amqp091-go
+RUN go build -o main code_processor.go
 
 FROM ubuntu:22.04 AS runner
 
 COPY --from=builder /build/main /app/main
-COPY --from=builder /build/config.yaml /app/config.yaml
 
-CMD [ "/app/main", "--config=/app/config.yaml" ]
+CMD [ "/app/main" ]
