@@ -16,6 +16,9 @@ RUN go build -o main ./cmd/code_processor.go
 
 FROM ubuntu:22.04 AS runner
 
-COPY --from=builder /build/main /app/main
+WORKDIR /app
 
-CMD [ "/app/main" ]
+COPY --from=builder /build/main ./main
+COPY --from=builder /build/build ./build
+
+CMD [ "./main" ]
