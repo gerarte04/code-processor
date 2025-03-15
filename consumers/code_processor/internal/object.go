@@ -1,4 +1,4 @@
-package code_processor
+package internal
 
 type BrokerReceiver interface {
     StartReceive() error

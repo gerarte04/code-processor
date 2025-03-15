@@ -1,6 +1,9 @@
 package rabbitmq
 
 import (
+	"code_processor/internal/models"
+	"code_processor/internal/usecases"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -11,9 +14,11 @@ type RabbitMQReceiver struct {
     conn *amqp.Connection
     ch *amqp.Channel
     queue *amqp.Queue
+
+    msgHandler usecases.MessageHandler
 }
 
-func NewRabbitMQReceiver(url string) (*RabbitMQReceiver, error) {
+func NewRabbitMQReceiver(url string, msgHandler usecases.MessageHandler) (*RabbitMQReceiver, error) {
     conn, err := amqp.Dial(url)
 
     if err != nil {
@@ -43,6 +48,8 @@ func NewRabbitMQReceiver(url string) (*RabbitMQReceiver, error) {
         conn: conn,
         ch: ch,
         queue: &queue,
+
+        msgHandler: msgHandler,
     }, nil
 }
 
@@ -61,12 +68,22 @@ func (s *RabbitMQReceiver) StartReceive() error {
         return fmt.Errorf("rabbitmq, starting consuming: %s", err.Error())
     }
 
+    var forever chan struct{}
+
     go func() {
         for m := range msgs {
-            log.Printf("message: %s", m.Body)
+            log.Printf("received message: %s", m.Body)
+            var code models.Code
+
+            if err := json.Unmarshal(m.Body, &code); err != nil {
+                log.Printf("converting to json: %s", err.Error())
+            }
+
+            s.msgHandler.HandleMessage(&code)
         }
     }()
 
+    <-forever
     return nil
 }
 

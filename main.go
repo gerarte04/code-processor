@@ -34,7 +34,7 @@ func main() {
     usersRepo := usersRepo.NewUsersRepo()
     sessMgr := sessions.NewSessionManager(cfg.SessionLivingTime)
 
-    rabbitMQSender, err := rabbMq.NewRabbitMQSender("amqp://guest:guest@localhost:5672")
+    rabbitMQSender, err := rabbMq.NewRabbitMQSender("amqp://guest:guest@broker:5672")
     if err != nil {
         log.Fatalf("%s", err.Error())
     }

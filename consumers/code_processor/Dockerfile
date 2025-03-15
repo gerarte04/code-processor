@@ -8,9 +8,11 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /build
 
-COPY ./consumers/code_processor/. .
-# RUN go install github.com/rabbitmq/amqp091-go
-RUN go build -o main code_processor.go
+COPY ./consumers/code_processor/go.mod ./consumers/code_processor/go.sum ./
+RUN go mod download
+
+COPY ./consumers/code_processor .
+RUN go build -o main ./cmd/code_processor.go
 
 FROM ubuntu:22.04 AS runner
 
