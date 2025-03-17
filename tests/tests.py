@@ -3,13 +3,20 @@ import pytest
 import requests
 import uuid
 import time
+import os
 
-BASE_URL = "http://127.0.0.1:8080"
+BASE_URL = "http://" + os.getenv("HTTP_HOST") + ":8080"
 
 @pytest.fixture(scope='module')
 def user_data():
     username = f'user_{uuid.uuid4()}'
     password = 'password228'
+    return {'username': username, 'password': password}
+
+@pytest.fixture(scope='module')
+def user_data_another():
+    username = 'kingmidashellyeah'
+    password = 'ya_eblan'
     return {'username': username, 'password': password}
 
 @pytest.fixture(scope='module')
@@ -28,14 +35,14 @@ def auth_token(user_data):
 
     return data['token']
 
-def test_register_user(user_data):
+def test_register_user(user_data_another):
     register_url = f"{BASE_URL}/register"
-    response = requests.post(register_url, json=user_data)
+    response = requests.post(register_url, json=user_data_another)
     assert response.status_code == 201
 
-def test_login_user(user_data):
+def test_login_user(user_data_another):
     login_url = f"{BASE_URL}/login"
-    response = requests.post(login_url, json=user_data)
+    response = requests.post(login_url, json=user_data_another)
     assert response.status_code == 200
     data = response.json()
     assert 'token' in data

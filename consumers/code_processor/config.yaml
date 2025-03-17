@@ -1,7 +1,5 @@
 rabbitmq:
   authority: guest:guest
-  host: broker
-  port: 5672
   queue_name: code_transfer
 processor:
   container_name: code_container

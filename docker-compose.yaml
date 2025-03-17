@@ -4,9 +4,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
+    environment:
+      - BROKER_HOST=broker
+      - BROKER_PORT=5672
     depends_on:
-      broker:
-        condition: service_healthy
+      consumer:
+        condition: service_started
 
   broker:
     image: "rabbitmq:3-management"
@@ -22,8 +25,22 @@ services:
   consumer:
     build:
       dockerfile: consumers/code_processor/Dockerfile
+    environment:
+      - BROKER_HOST=broker
+      - BROKER_PORT=5672
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  tester:
+    build:
+      dockerfile: tests/Dockerfile
+    environment:
+      - HTTP_HOST=http_server
+    profiles:
+      - test
     depends_on:
       http_server:
         condition: service_started

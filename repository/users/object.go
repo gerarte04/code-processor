@@ -53,6 +53,7 @@ func (db *UsersRepo) PostUser(key uuid.UUID, login string, password string) erro
 	}
 
 	db.users[key] = &models.User{
+        Id: key,
 		Login: login,
 		Password: password,
 	}

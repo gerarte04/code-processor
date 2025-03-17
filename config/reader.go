@@ -19,8 +19,8 @@ type ServiceConfig struct {
 
 type RabbitMQConfig struct {
     Authority string `yaml:"authority" env-default:"guest:guest"`
-    Host string `yaml:"host"`
-    Port string `yaml:"port"`
+    Host string `yaml:"host" env:"BROKER_HOST"`
+    Port string `yaml:"port" env:"BROKER_PORT"`
     QueueName string `yaml:"queue_name"`
 }
 
