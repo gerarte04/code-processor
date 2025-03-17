@@ -23,6 +23,7 @@ func (h *MessageHandler) HandleMessage(message *models.Code) {
 
     if err != nil {
         log.Printf("processing message: %s", err.Error())
+        h.respWriter.WriteError(message.TaskId, err)
         return
     }
 
@@ -30,5 +31,6 @@ func (h *MessageHandler) HandleMessage(message *models.Code) {
 
     if err != nil {
         log.Printf("writing response: %s", err.Error())
+        h.respWriter.WriteError(message.TaskId, err)
     }
 }

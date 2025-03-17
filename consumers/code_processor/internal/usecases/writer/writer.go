@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"code_processor/internal/usecases"
 	"encoding/json"
 	"io"
 	"log"
@@ -44,4 +45,16 @@ func (w *ResponseWriter) WriteResponse(resp any) error {
     log.Printf("http response code: %d, message: %s", reqResp.StatusCode, string(message))
 
     return nil
+}
+
+func (w *ResponseWriter) WriteError(taskId string, err error) {
+    respErr := w.WriteResponse(&usecases.ErrorDetail{
+        TaskId: taskId,
+        Error: err.Error(),
+        Number: -1,
+    })
+
+    if respErr != nil {
+        log.Printf("error while sending error: %s", respErr.Error())
+    }
 }
