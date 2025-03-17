@@ -48,7 +48,7 @@ func NewRabbitMQSender(url string) (*RabbitMQSender, error) {
 }
 
 func (s *RabbitMQSender) Send(message *models.Code) error {
-    data, err := json.Marshal(message)
+    data, err := json.Marshal(CreateRabbitMQMessage(message))
 
     if err != nil {
         return fmt.Errorf("formatting rabbitmq message: %s", err.Error())

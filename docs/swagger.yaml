@@ -10,6 +10,13 @@ definitions:
       status:
         type: string
     type: object
+  types.PostTaskObjectHandlerRequest:
+    properties:
+      code:
+        type: string
+      translator:
+        type: string
+    type: object
   types.PostTaskObjectHandlerResponse:
     properties:
       task_id:
@@ -182,12 +189,12 @@ paths:
       - application/json
       description: post task
       parameters:
-      - description: Task duration
+      - description: code params
         in: body
         name: duration
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/types.PostTaskObjectHandlerRequest'
       - description: Authorization token
         in: header
         name: Authorization

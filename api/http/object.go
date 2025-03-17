@@ -5,6 +5,8 @@ import (
 	"http_server/repository/models"
 	"http_server/usecases"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 // Object represents an HTTP handler for managing objects.
@@ -70,7 +72,7 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags task
 // @Accept  json
 // @Produce json
-// @Param duration body string true "Task duration"
+// @Param duration body types.PostTaskObjectHandlerRequest true "code params"
 // @Param Authorization header string true "Authorization token"
 // @Success 201 {object} types.PostTaskObjectHandlerResponse
 // @Failure 400 {string} string "Bad request"
@@ -78,12 +80,12 @@ func (s *Object) getStatusHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal error"
 // @Router /task [post]
 func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
-    _, err := types.CreatePostTaskObjectHandlerRequest(r)
+    req, err := types.CreatePostTaskObjectHandlerRequest(r)
     if err = types.ProcessCreateError(w, err); err != nil {
         return
     }  
 
-    value, err := s.tasksService.PostTask(&models.Code{Translator: "python", Code: "fuck"})
+    value, err := s.tasksService.PostTask(&models.Code{Translator: req.Translator, Code: req.Code})
     resp, err := types.CreatePostTaskObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -127,4 +129,20 @@ func (s *Object) postLoginHandler(w http.ResponseWriter, r *http.Request) {
 
     value, err := s.usersService.LoginUser(req.Login, req.Password)
     types.ProcessErrorPostUser(w, err, &types.PostUserLoginObjectHandlerResponse{SessionId: value})
+}
+
+func (s *Object) putCommitHandler(w http.ResponseWriter, r *http.Request) {
+    req, err := types.CreatePutCommitObjectHandlerRequest(r)
+    if err = types.ProcessCreateError(w, err); err != nil {
+        return
+    }
+
+    id, _ := uuid.Parse(req.TaskId)
+
+    err = s.tasksService.CommitTaskResult(&models.Result{
+        TaskId: id,
+        Output: req.Output,
+        StatusCode: req.StatusCode,
+    })
+    types.ProcessError(w, err, nil)
 }

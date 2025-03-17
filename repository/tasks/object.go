@@ -27,14 +27,29 @@ func (db *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
 	return value, nil
 }
 
-func (db *TasksRepo) PostTask(key uuid.UUID) error {
+func (db *TasksRepo) PostTask(key uuid.UUID, code *models.Code) error {
 	if _, ok := db.tasks[key]; ok {
 		return repository.ErrorTaskKeyAlreadyUsed
 	}
 
-	db.tasks[key] = &models.Task{
+	newTask := models.Task{
 		Id: key,
+		Finished: false,
+		Code: code,
+	}
+	newTask.Code.TaskId = key
+	db.tasks[key] = &newTask
+
+	return nil
+}
+
+func (db *TasksRepo) PutResult(key uuid.UUID, result *models.Result) error {
+	if _, ok := db.tasks[key]; !ok {
+		return repository.ErrorTaskNotFound
 	}
 
+	db.tasks[key].Result = result
+	db.tasks[key].Finished = true
+	
 	return nil
 }

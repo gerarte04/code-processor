@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -50,31 +49,30 @@ func CreateGetStatusObjectHandlerRequest(r *http.Request) (*GetObjectHandlerRequ
 }
 
 type PostTaskObjectHandlerRequest struct {
-    Dur time.Duration
+    Translator string `json:"translator"`
+    Code string `json:"code"`
+}
+
+type PutCommitObjectHandlerRequest struct {
+    TaskId string `json:"task_id"`
+    Output string `json:"output"`
+    StatusCode int64 `json:"status_code"`
 }
 
 func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandlerRequest, error) {
-    str, _ := io.ReadAll(r.Body)
+    str, err := io.ReadAll(r.Body)
 
-    if len(str) == 0 {
-        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
-    }
-
-    mp := make(map[string]string)
-
-    if err := json.Unmarshal(str, &mp); err != nil {
+    if err != nil {
         return nil, err
     }
 
-    d, ok := mp["duration"]
+    var req PostTaskObjectHandlerRequest
 
-    if !ok || len(d) == 0 {
-        return &PostTaskObjectHandlerRequest{Dur: time.Second}, nil
-    } else if dur, err := time.ParseDuration(d); err != nil {
+    if err = json.Unmarshal([]byte(str), &req); err != nil {
         return nil, err
-    } else {
-        return &PostTaskObjectHandlerRequest{Dur: dur}, nil
     }
+
+    return &req, nil
 }
 
 type PostUserObjectHandlerRequest struct {
@@ -98,8 +96,25 @@ func CreatePostUserObjectHandlerRequest(r *http.Request) (*PostUserObjectHandler
     return &req, nil
 }
 
+func CreatePutCommitObjectHandlerRequest(r *http.Request) (*PutCommitObjectHandlerRequest, error) {
+    str, err := io.ReadAll(r.Body)
+
+    if err != nil {
+        return nil, err
+    }
+
+    var req PutCommitObjectHandlerRequest
+
+    if err = json.Unmarshal([]byte(str), &req); err != nil {
+        return nil, err
+    }
+
+    return &req, nil
+}
+
 type GetResultObjectHandlerResponse struct {
-    Result int `json:"result"`
+    Output string `json:"result"`
+    // StatusCode int64 `json:"status_code"`
 }
 
 type GetStatusObjectHandlerResponse struct {
@@ -123,7 +138,10 @@ func CreateGetResultObjectHandlerResponse(value *models.Task, err error) (*GetRe
         return nil, usecases.ErrorTaskProcessing
     }
 
-    return &GetResultObjectHandlerResponse{Result: value.Result}, nil
+    return &GetResultObjectHandlerResponse{
+        Output: value.Result.Output,
+        //StatusCode: value.Result.StatusCode,
+    }, nil
 }
 
 func CreateGetStatusObjectHandlerResponse(value *models.Task, err error) (*GetStatusObjectHandlerResponse, error) {

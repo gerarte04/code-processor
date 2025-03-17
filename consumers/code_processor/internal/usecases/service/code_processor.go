@@ -6,10 +6,13 @@ import (
 	"code_processor/internal/usecases"
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 )
@@ -24,6 +27,7 @@ var (
 
 type CodeProcessor struct {
 	cli *client.Client
+	ctx *context.Context
 }
 
 func NewCodeProcessor() (*CodeProcessor, error) {
@@ -53,7 +57,7 @@ func CreateCodeFile(code *models.Code) (string, error) {
 		return "", err
 	}
 
-	return "", nil
+	return path, nil
 }
 
 func (p *CodeProcessor) BuildImage(path string, code *models.Code) error {
@@ -64,6 +68,7 @@ func (p *CodeProcessor) BuildImage(path string, code *models.Code) error {
 	if err != nil {
 		return fmt.Errorf("preparing archive: %s", err.Error())
 	}
+	defer tar.Close()
 
 	fileName := "file" + extensions[code.Translator]
 
@@ -76,23 +81,105 @@ func (p *CodeProcessor) BuildImage(path string, code *models.Code) error {
 			"file": &fileName,
 		},
 	}
-	res, err := p.cli.ImageBuild(ctx, tar, opts)
+	resp, err := p.cli.ImageBuild(ctx, tar, opts)
 
 	if err != nil {
 		return fmt.Errorf("building docker image: %s", err.Error())
 	}
 
-	defer res.Body.Close()
+	defer resp.Body.Close()
 
 	// var lastLine string
 
-	scanner := bufio.NewScanner(res.Body)
+	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
 		// lastLine = scanner.Text()
 		fmt.Println(scanner.Text())
 	}
 
 	return nil
+}
+
+func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
+	defer cancel()
+
+	var resp container.CreateResponse
+	resp, err := p.cli.ContainerCreate(ctx, &container.Config{
+		Image: "processing_code_image",
+		Tty: false,
+	}, nil, nil, nil, "code_container");
+	tries := 3
+
+	for err != nil {
+		if tries == 0 {
+			return nil, fmt.Errorf("cannot remove container: %s", err.Error())
+		}
+
+		list, err := p.cli.ContainerList(ctx, container.ListOptions{})
+
+		for _, item := range list {
+			if item.Image == "processing_code_image" {
+				p.cli.ContainerRemove(ctx, item.ID, container.RemoveOptions{})
+				tries -= 1
+
+				resp, err = p.cli.ContainerCreate(ctx, &container.Config{
+					Image: "processing_code_image",
+					Tty: false,
+				}, nil, nil, nil, "code_container");
+
+				continue
+			}
+		}
+
+		return nil, fmt.Errorf("creating docker container: %s", err.Error())
+	}
+
+	defer func() {
+		if err := p.cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{}); err != nil {
+			log.Printf("failed to remove container: %s", err.Error())
+		}
+	}()
+
+	if err := p.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return nil, fmt.Errorf("starting docker container: %s", err.Error())
+	}
+
+	statusCh, errCh := p.cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	var statusCode int64 = -1
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, fmt.Errorf("error while waiting container: %s", err.Error())
+		}
+	case status := <-statusCh:
+		statusCode = status.StatusCode
+	}
+
+	out, err := p.cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("reading docker container logs: %s", err.Error())
+	}
+
+	defer out.Close()
+
+	buf, err := io.ReadAll(out)
+
+	if err != nil {
+		return nil, fmt.Errorf("reading from io.ReadCloser: %s", err.Error())
+	}
+
+	str := string(buf)
+
+	return &usecases.ProcessingServiceResponse{
+		Output: &str,
+		StatusCode: statusCode,
+	}, nil
 }
 
 func (p *CodeProcessor) Process(code *models.Code) (*usecases.ProcessingServiceResponse, error) {
@@ -102,14 +189,15 @@ func (p *CodeProcessor) Process(code *models.Code) (*usecases.ProcessingServiceR
 		return nil, err
 	}
 
-	err = p.BuildImage(path, code)
-
-	if err != nil {
+	if err = p.BuildImage(path, code); err != nil {
 		return nil, err
 	}
 
-	return &usecases.ProcessingServiceResponse{
-		Result: "aboba",
-		StatusCode: 1,
-	}, nil
+	var resp *usecases.ProcessingServiceResponse
+
+	if resp, err = p.CreateAndRunContainer(); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }

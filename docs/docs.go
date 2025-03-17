@@ -243,12 +243,12 @@ const docTemplate = `{
                 ],
                 "parameters": [
                     {
-                        "description": "Task duration",
+                        "description": "code params",
                         "name": "duration",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/types.PostTaskObjectHandlerRequest"
                         }
                     },
                     {
@@ -301,6 +301,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.PostTaskObjectHandlerRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "translator": {
                     "type": "string"
                 }
             }

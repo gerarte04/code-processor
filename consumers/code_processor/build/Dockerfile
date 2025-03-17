@@ -9,5 +9,6 @@ ENV TRANSLATOR=${translator}
 
 WORKDIR /build
 COPY . .
+RUN chmod a+x run.sh
 
 CMD [ "/bin/bash", "-c", "./run.sh" ]

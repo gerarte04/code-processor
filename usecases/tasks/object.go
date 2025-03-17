@@ -31,7 +31,7 @@ func (rs *TasksService) GetTask(key uuid.UUID) (*models.Task, error) {
 
 func (rs *TasksService) PostTask(code *models.Code) (*uuid.UUID, error) {
     key := uuid.New()
-    err := rs.tasksRepo.PostTask(key)
+    err := rs.tasksRepo.PostTask(key, code)
 
     if err != nil {
         return nil, err
@@ -47,4 +47,12 @@ func (rs *TasksService) PostTask(code *models.Code) (*uuid.UUID, error) {
     // go process.SleepAndComplete(tsk, dur)
 
     return &key, nil
+}
+
+func (rs *TasksService) CommitTaskResult(result *models.Result) error {
+    if err := rs.tasksRepo.PutResult(result.TaskId, result); err != nil {
+        return err
+    }
+
+    return nil
 }

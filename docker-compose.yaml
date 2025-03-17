@@ -15,13 +15,15 @@ services:
       - 15672:15672
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 30s
+      interval: 20s
+      timeout: 60s
       retries: 3
 
   consumer:
     build:
       dockerfile: consumers/code_processor/Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       http_server:
         condition: service_started

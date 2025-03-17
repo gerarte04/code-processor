@@ -26,7 +26,7 @@ func (h *MessageHandler) HandleMessage(message *models.Code) {
         return
     }
 
-    err = h.respWriter.WriteResponse(resp)
+    err = h.respWriter.WriteResponse(CreateResponseObject(message, resp))
 
     if err != nil {
         log.Printf("writing response: %s", err.Error())

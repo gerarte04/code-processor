@@ -77,6 +77,7 @@ func (s *RabbitMQReceiver) StartReceive() error {
 
             if err := json.Unmarshal(m.Body, &code); err != nil {
                 log.Printf("converting to json: %s", err.Error())
+                continue
             }
 
             s.msgHandler.HandleMessage(&code)

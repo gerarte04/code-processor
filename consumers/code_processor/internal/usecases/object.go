@@ -15,6 +15,6 @@ type ResponseWriter interface {
 }
 
 type ProcessingServiceResponse struct {
-    Result string
-    StatusCode int
+    Output *string `json:"output"`
+    StatusCode int64 `json:"status_code"`
 }
