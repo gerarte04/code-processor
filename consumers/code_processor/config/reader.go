@@ -8,15 +8,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-type HttpConfig struct {
-    Host string `yaml:"host"`
-    Port string `yaml:"port"`
-}
-
-type ServiceConfig struct {
-    SessionLivingTime time.Duration `yaml:"session_living_time" env-default:"30m"`
-}
-
 type RabbitMQConfig struct {
     Authority string `yaml:"authority" env-default:"guest:guest"`
     Host string `yaml:"host"`
@@ -24,10 +15,19 @@ type RabbitMQConfig struct {
     QueueName string `yaml:"queue_name"`
 }
 
+type ProcessorConfig struct {
+    ContainerName string `yaml:"container_name" env-default:"code_container"`
+    ImageName string `yaml:"image_name" env-default:"processing_code_image"`
+    CodeFileName string `yaml:"code_file_name" env-default:"file"`
+    ImagePath string `yaml:"image_path" env-default:"./build"`
+    Dockerfile string `yaml:"dockerfile" env-default:"Dockerfile"`
+    BuildTimeout time.Duration `yaml:"build_timeout" env-default:"5m"`
+    RunTimeout time.Duration `yaml:"run_timeout" env-default:"10m"`
+}
+
 type Config struct {
-    HttpCfg HttpConfig `yaml:"http"`
     RabbMQCfg RabbitMQConfig `yaml:"rabbitmq"`
-    ServiceCfg ServiceConfig `yaml:"service"`
+    ProcCfg ProcessorConfig `yaml:"processor"`
 }
 
 func LoadConfig(path string, cfg any) {

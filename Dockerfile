@@ -12,7 +12,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build main.go
+RUN go build cmd/main.go
 
 FROM ubuntu:22.04 AS runner
 

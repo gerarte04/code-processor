@@ -1,0 +1,13 @@
+rabbitmq:
+  authority: guest:guest
+  host: broker
+  port: 5672
+  queue_name: code_transfer
+processor:
+  container_name: code_container
+  image_name: processing_code_image
+  code_file_name: file
+  image_path: ./build
+  dockerfile: Dockerfile
+  build_timeout: 5m
+  run_timeout: 10m

@@ -27,14 +27,14 @@ import (
 // @BasePath /
 func main() {
     appFlags := config.ParseFlags()
-    var cfg config.HttpConfig
+    var cfg config.Config
     config.LoadConfig(appFlags.ConfigPath, &cfg)
 
     tasksRepo := tasksRepo.NewTasksRepo()
     usersRepo := usersRepo.NewUsersRepo()
-    sessMgr := sessions.NewSessionManager(cfg.SessionLivingTime)
+    sessMgr := sessions.NewSessionManager(cfg.ServiceCfg)
 
-    rabbitMQSender, err := rabbMq.NewRabbitMQSender("amqp://guest:guest@broker:5672")
+    rabbitMQSender, err := rabbMq.NewRabbitMQSender(cfg.RabbMQCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
     }
@@ -51,7 +51,7 @@ func main() {
     )
     r.Get("/swagger/*", httpSwagger.WrapHandler)
 
-    err = pkgHttp.CreateServer(cfg.Host + ":" + cfg.Port, r)
+    err = pkgHttp.CreateServer(cfg.HttpCfg.Host + ":" + cfg.HttpCfg.Port, r)
 
     if err != nil {
         _ = fmt.Errorf("%s", "failed to start: " + err.Error())

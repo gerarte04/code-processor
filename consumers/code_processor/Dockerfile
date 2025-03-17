@@ -20,5 +20,6 @@ WORKDIR /app
 
 COPY --from=builder /build/main ./main
 COPY --from=builder /build/build ./build
+COPY --from=builder /build/config.yaml /app/config.yaml
 
 CMD [ "./main" ]

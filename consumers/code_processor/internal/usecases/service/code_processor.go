@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"code_processor/config"
 	"code_processor/internal/models"
 	"code_processor/internal/usecases"
 	"context"
@@ -12,7 +13,6 @@ import (
 	"log"
 	"os"
 	"slices"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -30,10 +30,10 @@ var (
 
 type CodeProcessor struct {
 	cli *client.Client
-	ctx *context.Context
+    cfg config.ProcessorConfig
 }
 
-func NewCodeProcessor() (*CodeProcessor, error) {
+func NewCodeProcessor(cfg config.ProcessorConfig) (*CodeProcessor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
 	if err != nil {
@@ -47,7 +47,7 @@ func NewCodeProcessor() (*CodeProcessor, error) {
     }
 
     for _, item := range list {
-        if slices.Contains(item.Names, "/code_container") {
+        if slices.Contains(item.Names, "/" + cfg.ContainerName) {
             err = cli.ContainerRemove(context.Background(), item.ID, container.RemoveOptions{Force: true})
 
             if err != nil {
@@ -58,42 +58,42 @@ func NewCodeProcessor() (*CodeProcessor, error) {
 
     return &CodeProcessor{
 		cli: cli,
+        cfg: cfg,
 	}, nil
 }
 
-func CreateCodeFile(code *models.Code) (string, error) {
-	path := "./build/"
-	f, err := os.Create(path + "file" + extensions[code.Translator])
+func (p *CodeProcessor) CreateCodeFile(code *models.Code) error {
+	f, err := os.Create(p.cfg.ImagePath + "/" + p.cfg.CodeFileName + extensions[code.Translator])
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	defer f.Close()
 	_, err = f.WriteString(code.Code)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return path, nil
+	return nil
 }
 
-func (p *CodeProcessor) BuildImage(path string, code *models.Code) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
+func (p *CodeProcessor) BuildImage(code *models.Code) error {
+	ctx, cancel := context.WithTimeout(context.Background(), p.cfg.BuildTimeout)
 	defer cancel()
 
-	tar, err := archive.TarWithOptions(path, &archive.TarOptions{})
+	tar, err := archive.TarWithOptions(p.cfg.ImagePath, &archive.TarOptions{})
 	if err != nil {
 		return fmt.Errorf("preparing archive: %s", err.Error())
 	}
 	defer tar.Close()
 
-	fileName := "file" + extensions[code.Translator]
+	fileName := p.cfg.CodeFileName + extensions[code.Translator]
 
 	opts := types.ImageBuildOptions{
-		Dockerfile: "Dockerfile",
-		Tags: []string{"processing_code_image"},
+		Dockerfile: p.cfg.Dockerfile,
+		Tags: []string{p.cfg.ImageName},
 		Remove:     true,
 		BuildArgs: map[string]*string {
 			"translator": &code.Translator,
@@ -129,9 +129,9 @@ func (p *CodeProcessor) BuildImage(path string, code *models.Code) error {
 func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResponse, error) {
 	var resp container.CreateResponse
 	resp, err := p.cli.ContainerCreate(context.Background(), &container.Config{
-		Image: "processing_code_image",
+		Image: p.cfg.ImageName,
 		Tty: false,
-	}, nil, nil, nil, "code_container");
+	}, nil, nil, nil, p.cfg.ContainerName);
 
     if err != nil {
         return nil, fmt.Errorf("error creating container: %s", err.Error())
@@ -147,7 +147,7 @@ func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResp
 		return nil, fmt.Errorf("starting docker container: %s", err.Error())
 	}
 
-    ctx, cancel := context.WithTimeout(context.Background(), time.Second*600)
+    ctx, cancel := context.WithTimeout(context.Background(), p.cfg.RunTimeout)
 	defer cancel()
 
 	statusCh, errCh := p.cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
@@ -188,13 +188,13 @@ func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResp
 }
 
 func (p *CodeProcessor) Process(code *models.Code) (*usecases.ProcessingServiceResponse, error) {
-	path, err := CreateCodeFile(code)
+	err := p.CreateCodeFile(code)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err = p.BuildImage(path, code); err != nil {
+	if err = p.BuildImage(code); err != nil {
 		return nil, err
 	}
 

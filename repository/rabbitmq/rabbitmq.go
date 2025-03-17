@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
+	"http_server/config"
 	"http_server/repository/models"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -12,9 +13,12 @@ type RabbitMQSender struct {
     conn *amqp.Connection
     ch *amqp.Channel
     queue *amqp.Queue
+
+    cfg config.RabbitMQConfig
 }
 
-func NewRabbitMQSender(url string) (*RabbitMQSender, error) {
+func NewRabbitMQSender(cfg config.RabbitMQConfig) (*RabbitMQSender, error) {
+    url := "amqp://" + cfg.Authority + "@" + cfg.Host + ":" + cfg.Port
     conn, err := amqp.Dial(url)
 
     if err != nil {
@@ -28,7 +32,7 @@ func NewRabbitMQSender(url string) (*RabbitMQSender, error) {
     }
 
     queue, err := ch.QueueDeclare(
-        "code_transfer",
+        cfg.QueueName,
         true,
         false,
         false,
@@ -44,6 +48,7 @@ func NewRabbitMQSender(url string) (*RabbitMQSender, error) {
         conn: conn,
         ch: ch,
         queue: &queue,
+        cfg: cfg,
     }, nil
 }
 

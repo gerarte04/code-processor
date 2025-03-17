@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code_processor/config"
 	rabbMq "code_processor/internal/rabbitmq"
 	"code_processor/internal/usecases/handler"
 	"code_processor/internal/usecases/service"
@@ -9,7 +10,11 @@ import (
 )
 
 func main() {
-    procService, err := service.NewCodeProcessor()
+    appFlags := config.ParseFlags()
+    var cfg config.Config
+    config.LoadConfig(appFlags.ConfigPath, &cfg)
+
+    procService, err := service.NewCodeProcessor(cfg.ProcCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
         return
@@ -17,7 +22,7 @@ func main() {
 
     respWriter := writer.NewResponseWriter()
     msgHandler := handler.NewMessageHandler(procService, respWriter)
-    rabbitMqReceiver, err := rabbMq.NewRabbitMQReceiver("amqp://guest:guest@broker:5672", msgHandler)
+    rabbitMqReceiver, err := rabbMq.NewRabbitMQReceiver(cfg.RabbMQCfg, msgHandler)
 
     if err != nil {
         log.Fatalf("%s", err.Error())

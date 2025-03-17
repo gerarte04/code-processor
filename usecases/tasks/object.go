@@ -43,9 +43,6 @@ func (rs *TasksService) PostTask(code *models.Code) (*uuid.UUID, error) {
         return nil, err
     }
 
-    // tsk, _ := rs.tasksRepo.GetTask(key)
-    // go process.SleepAndComplete(tsk, dur)
-
     return &key, nil
 }
 

@@ -1,3 +1,10 @@
-host: 
-port: 8080
-session_living_time: 30m
+http:
+  host: 
+  port: 8080
+rabbitmq:
+  authority: guest:guest
+  host: broker
+  port: 5672
+  queue_name: code_transfer
+service:
+  session_living_time: 30m

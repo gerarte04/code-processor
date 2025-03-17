@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"http_server/config"
 	"http_server/pkg/generator"
 	"http_server/repository/models"
 	"http_server/usecases"
@@ -11,13 +12,13 @@ import (
 
 type SessionManager struct {
 	sessions map[string]*models.Session
-	sessionLivingTime time.Duration
+    serviceCfg config.ServiceConfig
 }
 
-func NewSessionManager(sessionLivingTime time.Duration) *SessionManager {
+func NewSessionManager(serviceCfg config.ServiceConfig) *SessionManager {
 	return &SessionManager{
 		sessions: make(map[string]*models.Session),
-		sessionLivingTime: sessionLivingTime,
+		serviceCfg: serviceCfg,
 	}
 }
 
@@ -38,7 +39,7 @@ func (sm *SessionManager) StartSession(userId uuid.UUID) (*models.Session, error
 	sm.sessions[newId] = &models.Session{
 		UserId: userId,
 		SessionId: newId,
-		ExpiresAt: time.Now().Add(sm.sessionLivingTime),
+		ExpiresAt: time.Now().Add(sm.serviceCfg.SessionLivingTime),
 	}
 	return sm.sessions[newId], nil
 }

@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"code_processor/config"
 	"code_processor/internal/models"
 	"code_processor/internal/usecases"
 	"encoding/json"
@@ -15,10 +16,12 @@ type RabbitMQReceiver struct {
     ch *amqp.Channel
     queue *amqp.Queue
 
+    cfg config.RabbitMQConfig
     msgHandler usecases.MessageHandler
 }
 
-func NewRabbitMQReceiver(url string, msgHandler usecases.MessageHandler) (*RabbitMQReceiver, error) {
+func NewRabbitMQReceiver(cfg config.RabbitMQConfig, msgHandler usecases.MessageHandler) (*RabbitMQReceiver, error) {
+    url := "amqp://" + cfg.Authority + "@" + cfg.Host + ":" + cfg.Port
     conn, err := amqp.Dial(url)
 
     if err != nil {
@@ -32,7 +35,7 @@ func NewRabbitMQReceiver(url string, msgHandler usecases.MessageHandler) (*Rabbi
     }
 
     queue, err := ch.QueueDeclare(
-        "code_transfer",
+        cfg.QueueName,
         true,
         false,
         false,
@@ -49,6 +52,7 @@ func NewRabbitMQReceiver(url string, msgHandler usecases.MessageHandler) (*Rabbi
         ch: ch,
         queue: &queue,
 
+        cfg: cfg,
         msgHandler: msgHandler,
     }, nil
 }
