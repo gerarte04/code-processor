@@ -1,7 +1,7 @@
 services:
   http_server:
     build:
-      dockerfile: Dockerfile
+      dockerfile: http_server/Dockerfile
     ports:
       - 8080:8080
     environment:

@@ -8,10 +8,10 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /build
 
-COPY go.mod go.sum ./
+COPY http_server/go.mod http_server/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY http_server .
 RUN go build cmd/main.go
 
 FROM ubuntu:22.04 AS runner
