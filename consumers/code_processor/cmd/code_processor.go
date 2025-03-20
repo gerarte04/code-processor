@@ -2,8 +2,8 @@ package main
 
 import (
 	"code_processor/config"
+	"code_processor/internal/api/messages"
 	rabbMq "code_processor/internal/rabbitmq"
-	"code_processor/internal/usecases/handler"
 	"code_processor/internal/usecases/service"
 	"code_processor/internal/usecases/writer"
 	"log"
@@ -21,7 +21,7 @@ func main() {
     }
 
     respWriter := writer.NewResponseWriter()
-    msgHandler := handler.NewMessageHandler(procService, respWriter)
+    msgHandler := messages.NewMessageHandler(procService, respWriter)
     rabbitMqReceiver, err := rabbMq.NewRabbitMQReceiver(cfg.RabbMQCfg, msgHandler)
 
     if err != nil {

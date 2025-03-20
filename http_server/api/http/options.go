@@ -8,6 +8,7 @@ import (
 
 const (
     rootPath = "/"
+    healthCheckPath = "/health"
 
     getResultPath = "/result/*"
     getStatusPath = "/status/*"
@@ -25,6 +26,7 @@ func (s *Object) WithFreeUserHandlers(r chi.Router) func(r chi.Router) {
         r.Post(postRegisterPath, s.postRegisterHandler)
         r.Post(postLoginPath, s.postLoginHandler)
         r.Put(putCommitPath, s.putCommitHandler)
+        r.Get(healthCheckPath, s.healthCheckHandler)
     }
 }
 

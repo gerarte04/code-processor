@@ -10,6 +10,11 @@ services:
     depends_on:
       consumer:
         condition: service_started
+    healthcheck:
+      test: curl --fail -X GET http://http_server:8080/health || exit 1
+      interval: 3s
+      timeout: 3s
+      retries: 1
 
   broker:
     image: "rabbitmq:3-management"
@@ -39,8 +44,9 @@ services:
       dockerfile: tests/Dockerfile
     environment:
       - HTTP_HOST=http_server
+      - HTTP_PORT=8080
     profiles:
       - test
     depends_on:
       http_server:
-        condition: service_started
+        condition: service_healthy

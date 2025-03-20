@@ -1,4 +1,4 @@
-package handler
+package messages
 
 import (
 	"code_processor/internal/models"

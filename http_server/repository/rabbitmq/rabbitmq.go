@@ -18,7 +18,7 @@ type RabbitMQSender struct {
 }
 
 func NewRabbitMQSender(cfg config.RabbitMQConfig) (*RabbitMQSender, error) {
-    url := "amqp://" + cfg.Authority + "@" + cfg.Host + ":" + cfg.Port
+    url := fmt.Sprintf("amqp://%s@%s:%s", cfg.Authority, cfg.Host, cfg.Port)
     conn, err := amqp.Dial(url)
 
     if err != nil {

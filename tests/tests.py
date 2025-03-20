@@ -5,7 +5,7 @@ import uuid
 import time
 import os
 
-BASE_URL = "http://" + os.getenv("HTTP_HOST") + ":8080"
+BASE_URL = "http://" + os.getenv("HTTP_HOST") + ":" + os.getenv("HTTP_PORT")
 
 @pytest.fixture(scope='module')
 def user_data():

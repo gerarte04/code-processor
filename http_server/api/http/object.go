@@ -137,7 +137,10 @@ func (s *Object) putCommitHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    id, _ := uuid.Parse(req.TaskId)
+    id, err := uuid.Parse(req.TaskId)
+    if err != nil {
+        types.ProcessError(w, err, nil)
+    }
 
     err = s.tasksService.CommitTaskResult(&models.Result{
         TaskId: id,
@@ -145,4 +148,8 @@ func (s *Object) putCommitHandler(w http.ResponseWriter, r *http.Request) {
         StatusCode: req.StatusCode,
     })
     types.ProcessError(w, err, nil)
+}
+
+func (s *Object) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
 }

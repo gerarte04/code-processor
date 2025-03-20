@@ -1,8 +1,8 @@
-package handler
+package messages
 
 import (
+	"code_processor/internal/api"
 	"code_processor/internal/models"
-	"code_processor/internal/usecases"
 )
 
 type ResponseObject struct {
@@ -11,7 +11,7 @@ type ResponseObject struct {
 	StatusCode int64 `json:"status_code"`
 }
 
-func CreateResponseObject(code *models.Code, resp *usecases.ProcessingServiceResponse) *ResponseObject {
+func CreateResponseObject(code *models.Code, resp *api.ProcessingServiceResponse) *ResponseObject {
 	return &ResponseObject{
 		TaskId: code.TaskId,
 		Output: resp.Output,

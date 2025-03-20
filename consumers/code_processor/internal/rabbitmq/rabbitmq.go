@@ -2,8 +2,8 @@ package rabbitmq
 
 import (
 	"code_processor/config"
+	"code_processor/internal/api"
 	"code_processor/internal/models"
-	"code_processor/internal/usecases"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,11 +17,11 @@ type RabbitMQReceiver struct {
     queue *amqp.Queue
 
     cfg config.RabbitMQConfig
-    msgHandler usecases.MessageHandler
+    msgHandler api.MessageHandler
 }
 
-func NewRabbitMQReceiver(cfg config.RabbitMQConfig, msgHandler usecases.MessageHandler) (*RabbitMQReceiver, error) {
-    url := "amqp://" + cfg.Authority + "@" + cfg.Host + ":" + cfg.Port
+func NewRabbitMQReceiver(cfg config.RabbitMQConfig, msgHandler api.MessageHandler) (*RabbitMQReceiver, error) {
+    url := fmt.Sprintf("amqp://%s@%s:%s", cfg.Authority, cfg.Host, cfg.Port)
     conn, err := amqp.Dial(url)
 
     if err != nil {

@@ -3,8 +3,8 @@ package service
 import (
 	"bufio"
 	"code_processor/config"
+	"code_processor/internal/api"
 	"code_processor/internal/models"
-	"code_processor/internal/usecases"
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,7 +24,7 @@ var (
 	extensions = map[string]string {
 		"gcc": ".cpp",
 		"clang": ".cpp",
-		"python": ".py",
+		"python3": ".py",
 	}
 )
 
@@ -63,7 +63,13 @@ func NewCodeProcessor(cfg config.ProcessorConfig) (*CodeProcessor, error) {
 }
 
 func (p *CodeProcessor) CreateCodeFile(code *models.Code) error {
-	f, err := os.Create(p.cfg.ImagePath + "/" + p.cfg.CodeFileName + extensions[code.Translator])
+    ext, ok := extensions[code.Translator]
+
+    if !ok {
+        return fmt.Errorf("no supported translators")
+    }
+
+	f, err := os.Create(fmt.Sprintf("%s/%s%s", p.cfg.ImagePath, p.cfg.CodeFileName, ext))
 
 	if err != nil {
 		return err
@@ -89,7 +95,13 @@ func (p *CodeProcessor) BuildImage(code *models.Code) error {
 	}
 	defer tar.Close()
 
-	fileName := p.cfg.CodeFileName + extensions[code.Translator]
+    ext, ok := extensions[code.Translator]
+
+    if !ok {
+        return fmt.Errorf("no supported translators")
+    }
+
+	fileName := p.cfg.CodeFileName + ext
 
 	opts := types.ImageBuildOptions{
 		Dockerfile: p.cfg.Dockerfile,
@@ -126,7 +138,7 @@ func (p *CodeProcessor) BuildImage(code *models.Code) error {
 	return nil
 }
 
-func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResponse, error) {
+func (p *CodeProcessor) CreateAndRunContainer() (*api.ProcessingServiceResponse, error) {
 	var resp container.CreateResponse
 	resp, err := p.cli.ContainerCreate(context.Background(), &container.Config{
 		Image: p.cfg.ImageName,
@@ -181,13 +193,13 @@ func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResp
 
 	str := string(buf)
 
-	return &usecases.ProcessingServiceResponse{
+	return &api.ProcessingServiceResponse{
 		Output: &str,
 		StatusCode: statusCode,
 	}, nil
 }
 
-func (p *CodeProcessor) Process(code *models.Code) (*usecases.ProcessingServiceResponse, error) {
+func (p *CodeProcessor) Process(code *models.Code) (*api.ProcessingServiceResponse, error) {
 	err := p.CreateCodeFile(code)
 
 	if err != nil {
@@ -198,7 +210,7 @@ func (p *CodeProcessor) Process(code *models.Code) (*usecases.ProcessingServiceR
 		return nil, err
 	}
 
-	var resp *usecases.ProcessingServiceResponse
+	var resp *api.ProcessingServiceResponse
 
 	if resp, err = p.CreateAndRunContainer(); err != nil {
 		return nil, err

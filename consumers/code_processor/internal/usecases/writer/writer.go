@@ -1,7 +1,7 @@
 package writer
 
 import (
-	"code_processor/internal/usecases"
+	"code_processor/internal/api"
 	"encoding/json"
 	"io"
 	"log"
@@ -48,10 +48,10 @@ func (w *ResponseWriter) WriteResponse(resp any) error {
 }
 
 func (w *ResponseWriter) WriteError(taskId string, err error) {
-    respErr := w.WriteResponse(&usecases.ErrorDetail{
+    respErr := w.WriteResponse(&api.ErrorDetail{
         TaskId: taskId,
         Error: err.Error(),
-        Number: -1,
+        StatusCode: -1,
     })
 
     if respErr != nil {

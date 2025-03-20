@@ -16,6 +16,8 @@ RUN go build cmd/main.go
 
 FROM ubuntu:22.04 AS runner
 
+RUN apt update && apt install -y curl
+
 COPY --from=builder /build/main /app/main
 COPY --from=builder /build/config.yaml /app/config.yaml
 
