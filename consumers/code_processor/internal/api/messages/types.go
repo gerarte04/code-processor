@@ -6,15 +6,15 @@ import (
 )
 
 type ResponseObject struct {
-	TaskId string `json:"task_id"`
-	Output *string `json:"output"`
-	StatusCode int64 `json:"status_code"`
+    TaskId string `json:"task_id"`
+    Output *string `json:"output"`
+    StatusCode int64 `json:"status_code"`
 }
 
 func CreateResponseObject(code *models.Code, resp *api.ProcessingServiceResponse) *ResponseObject {
-	return &ResponseObject{
-		TaskId: code.TaskId,
-		Output: resp.Output,
-		StatusCode: resp.StatusCode,
-	}
+    return &ResponseObject{
+        TaskId: code.TaskId,
+        Output: resp.Output,
+        StatusCode: resp.StatusCode,
+    }
 }

@@ -7,18 +7,18 @@ import (
 )
 
 type TasksRepo interface {
-	GetTask(key uuid.UUID) (*models.Task, error)
-	PostTask(key uuid.UUID, code *models.Code) error
-	PutResult(key uuid.UUID, result *models.Result) error
+    GetTask(key uuid.UUID) (*models.Task, error)
+    PostTask(key uuid.UUID, code *models.Code) error
+    PutResult(key uuid.UUID, result *models.Result) error
 }
 
 type UsersRepo interface {
-	GetUser(key uuid.UUID) (*models.User, error)
-	GetUserByCred(login string, password string) (*models.User, error)
-	PostUser(key uuid.UUID, login string, password string) error
+    GetUser(key uuid.UUID) (*models.User, error)
+    GetUserByCred(login string, password string) (*models.User, error)
+    PostUser(key uuid.UUID, login string, password string) error
 }
 
 type BrokerSender interface {
-	Send(*models.Code) error
-	Close()
+    Send(*models.Code) error
+    Close()
 }

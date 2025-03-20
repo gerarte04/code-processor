@@ -32,7 +32,7 @@ func (s *Object) WithFreeUserHandlers(r chi.Router) func(r chi.Router) {
 
 // Return function that sets group of handlers with authentication required
 func (s *Object) WithSecuredUserHandlers(r chi.Router, authService middlewares.AuthMiddleware) func(r chi.Router) {
-	return func(r chi.Router) {
+    return func(r chi.Router) {
         r.Group(func(r chi.Router) {
             r.Use(authService.Authenticate)
             r.Get(getResultPath, s.getResultHandler)

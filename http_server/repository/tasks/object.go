@@ -12,44 +12,44 @@ type TasksRepo struct {
 }
 
 func NewTasksRepo() (*TasksRepo) {
-	return &TasksRepo {
-		tasks: make(map[uuid.UUID]*models.Task),
-	}
+    return &TasksRepo {
+        tasks: make(map[uuid.UUID]*models.Task),
+    }
 }
 
 func (db *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
-	value, ok := db.tasks[key]
+    value, ok := db.tasks[key]
 
-	if !ok {
-		return nil, repository.ErrorTaskNotFound
-	}
+    if !ok {
+        return nil, repository.ErrorTaskNotFound
+    }
 
-	return value, nil
+    return value, nil
 }
 
 func (db *TasksRepo) PostTask(key uuid.UUID, code *models.Code) error {
-	if _, ok := db.tasks[key]; ok {
-		return repository.ErrorTaskKeyAlreadyUsed
-	}
+    if _, ok := db.tasks[key]; ok {
+        return repository.ErrorTaskKeyAlreadyUsed
+    }
 
-	newTask := models.Task{
-		Id: key,
-		Finished: false,
-		Code: code,
-	}
-	newTask.Code.TaskId = key
-	db.tasks[key] = &newTask
+    newTask := models.Task{
+        Id: key,
+        Finished: false,
+        Code: code,
+    }
+    newTask.Code.TaskId = key
+    db.tasks[key] = &newTask
 
-	return nil
+    return nil
 }
 
 func (db *TasksRepo) PutResult(key uuid.UUID, result *models.Result) error {
-	if _, ok := db.tasks[key]; !ok {
-		return repository.ErrorTaskNotFound
-	}
+    if _, ok := db.tasks[key]; !ok {
+        return repository.ErrorTaskNotFound
+    }
 
-	db.tasks[key].Result = result
-	db.tasks[key].Finished = true
-	
-	return nil
+    db.tasks[key].Result = result
+    db.tasks[key].Finished = true
+    
+    return nil
 }
