@@ -4,6 +4,7 @@ import (
 	"code_processor/internal/models"
 	"code_processor/internal/repository"
 	"code_processor/internal/usecases"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -17,11 +18,19 @@ func NewTasksService(procService usecases.ProcessingService, tasksRepo repositor
     return &TasksService{procService: procService, tasksRepo: tasksRepo}
 }
 
+func (s *TasksService) ServeError(errMsg string, task *models.Task) error {
+    task.Output = errMsg
+    task.StatusCode = -1
+    _ = s.tasksRepo.PutResult(task.Id, task)
+    
+    return errors.New(errMsg)
+}
+
 func (s *TasksService) ServeTask(task *models.Task) error {
     resp, err := s.procService.Process(task)
 
     if err != nil {
-        return fmt.Errorf("processing task: %s", err.Error())
+        return s.ServeError(fmt.Sprintf("processing task: %s", err.Error()), task)
     }
 
     task.Output = strings.ReplaceAll(resp.Output, "\u0000", "")
@@ -29,7 +38,7 @@ func (s *TasksService) ServeTask(task *models.Task) error {
     err = s.tasksRepo.PutResult(task.Id, task)
 
     if err != nil {
-        return fmt.Errorf("writing response: %s", err.Error())
+        return s.ServeError(fmt.Sprintf("writing response: %s", err.Error()), task)
     }
 
     return nil

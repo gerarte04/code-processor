@@ -1,10 +1,10 @@
 package models
 
 type Task struct {
-    Id string `db:"id"`
+    Id string `db:"id" json:"task_id"`
 
-    Output string `db:"output"`
-    StatusCode int64 `db:"status_code"`
+    Output string
+    StatusCode int64
 
     Translator string `db:"translator" json:"translator"`
     Code string `db:"code" json:"code"`

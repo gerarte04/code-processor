@@ -41,15 +41,15 @@ func (r *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
     
     if err := row.StructScan(&task); err != nil {
         log.Printf("getting task: %s", err.Error())
-        return nil, repository.ErrorInternalQueryError
+        return nil, repository.ErrorTaskNotFound
     }
 
     return &task, nil
 }
 
 func (r *TasksRepo) PostTask(key uuid.UUID, task *models.Task) error {
-    res, err := r.db.Exec(`INSERT INTO tasks (id, finished, translator, code)
-        VALUES ($1, false, $2, $3)`, key, &task.Translator, &task.Code)
+    res, err := r.db.Exec(`INSERT INTO tasks (id, translator, code)
+        VALUES ($1, $2, $3)`, key, task.Translator, task.Code)
 
         if err != nil {
             log.Printf("posting task: %s", err.Error())

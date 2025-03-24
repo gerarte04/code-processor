@@ -1,9 +1,9 @@
 CREATE TABLE tasks (
 	id uuid PRIMARY KEY NOT NULL UNIQUE,
-	finished boolean NOT NULL,
+	finished boolean NOT NULL DEFAULT false,
 
-	output text,
-	status_code int8,
+	output text DEFAULT '',
+	status_code int8 DEFAULT -1,
 	
 	translator varchar(50) NOT NULL,
 	code text

@@ -29,9 +29,8 @@ func NewTasksRepo(connStr string) (*TasksRepo, error) {
 }
 
 func (r *TasksRepo) PutResult(key string, task *models.Task) error {
-    fmt.Println(task.Output)
-    res, err := r.db.Exec(`UPDATE tasks SET finished = true, output = $1, status_code = $2`,
-        task.Output, task.StatusCode)
+    res, err := r.db.Exec(`UPDATE tasks SET finished = true, output = $1, status_code = $2
+        WHERE id = $3`, task.Output, task.StatusCode, key)
 
     if err != nil {
         return fmt.Errorf("putting result: %s", err.Error())
