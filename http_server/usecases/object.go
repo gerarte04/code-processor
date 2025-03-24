@@ -8,8 +8,8 @@ import (
 
 type TasksService interface {
     GetTask(key uuid.UUID) (*models.Task, error)
-    PostTask(code *models.Code) (*uuid.UUID, error)
-    CommitTaskResult(result *models.Result) error
+    PostTask(task *models.Task) (*uuid.UUID, error)
+    CommitTaskResult(result *models.Task) error
 }
 
 type UsersService interface {

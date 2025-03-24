@@ -29,15 +29,16 @@ func (rs *TasksService) GetTask(key uuid.UUID) (*models.Task, error) {
     return task, nil
 }
 
-func (rs *TasksService) PostTask(code *models.Code) (*uuid.UUID, error) {
+func (rs *TasksService) PostTask(task *models.Task) (*uuid.UUID, error) {
     key := uuid.New()
-    err := rs.tasksRepo.PostTask(key, code)
+    err := rs.tasksRepo.PostTask(key, task)
 
     if err != nil {
         return nil, err
     }
 
-    err = rs.sender.Send(code)
+    task.Id = key
+    err = rs.sender.Send(task)
 
     if err != nil {
         return nil, err
@@ -46,8 +47,8 @@ func (rs *TasksService) PostTask(code *models.Code) (*uuid.UUID, error) {
     return &key, nil
 }
 
-func (rs *TasksService) CommitTaskResult(result *models.Result) error {
-    if err := rs.tasksRepo.PutResult(result.TaskId, result); err != nil {
+func (rs *TasksService) CommitTaskResult(result *models.Task) error {
+    if err := rs.tasksRepo.PutResult(result.Id, result); err != nil {
         return err
     }
 

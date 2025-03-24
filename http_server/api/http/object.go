@@ -85,7 +85,7 @@ func (s *Object) postTaskHandler(w http.ResponseWriter, r *http.Request) {
         return
     }  
 
-    value, err := s.tasksService.PostTask(&models.Code{Translator: req.Translator, Code: req.Code})
+    value, err := s.tasksService.PostTask(&models.Task{Translator: req.Translator, Code: req.Code})
     resp, err := types.CreatePostTaskObjectHandlerResponse(value, err)
 
     types.ProcessError(w, err, resp)
@@ -142,8 +142,8 @@ func (s *Object) putCommitHandler(w http.ResponseWriter, r *http.Request) {
         types.ProcessError(w, err, nil)
     }
 
-    err = s.tasksService.CommitTaskResult(&models.Result{
-        TaskId: id,
+    err = s.tasksService.CommitTaskResult(&models.Task{
+        Id: id,
         Output: req.Output,
         StatusCode: req.StatusCode,
     })

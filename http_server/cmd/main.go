@@ -30,8 +30,16 @@ func main() {
     var cfg config.Config
     config.LoadConfig(appFlags.ConfigPath, &cfg)
 
-    tasksRepo := tasksRepo.NewTasksRepo()
-    usersRepo := usersRepo.NewUsersRepo()
+    tasksRepo, err := tasksRepo.NewTasksRepo("host=postgres port=5432 dbname=postgres_db user=admin password=admin sslmode=disable")
+    if err != nil {
+        log.Fatalf("%s", err.Error())
+    }
+
+    usersRepo, err := usersRepo.NewUsersRepo("host=postgres port=5432 dbname=postgres_db user=admin password=admin sslmode=disable")
+    if err != nil {
+        log.Fatalf("%s", err.Error())
+    }
+
     sessMgr := sessions.NewSessionManager(cfg.ServiceCfg)
 
     rabbitMQSender, err := rabbMq.NewRabbitMQSender(cfg.RabbMQCfg)

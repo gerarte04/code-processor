@@ -3,53 +3,83 @@ package tasks
 import (
 	"http_server/repository"
 	"http_server/repository/models"
+	"log"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	_ "github.com/lib/pq"
+)
+
+const (
+    PqUniqueViolation = "23505"
 )
 
 type TasksRepo struct {
-    tasks map[uuid.UUID]*models.Task
+    db *sqlx.DB
 }
 
-func NewTasksRepo() (*TasksRepo) {
-    return &TasksRepo {
-        tasks: make(map[uuid.UUID]*models.Task),
-    }
-}
+func NewTasksRepo(connStr string) (*TasksRepo, error) {
+    db, err := sqlx.Connect("postgres", connStr)
 
-func (db *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
-    value, ok := db.tasks[key]
-
-    if !ok {
-        return nil, repository.ErrorTaskNotFound
+    if err != nil {
+        return nil, err
     }
 
-    return value, nil
+    if err = db.Ping(); err != nil {
+        return nil, err
+    }
+
+    return &TasksRepo{
+        db: db,
+    }, nil
 }
 
-func (db *TasksRepo) PostTask(key uuid.UUID, code *models.Code) error {
-    if _, ok := db.tasks[key]; ok {
+func (r *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
+    row := r.db.QueryRowx("SELECT * FROM tasks WHERE id = $1", key)
+    var task models.Task
+    
+    if err := row.StructScan(&task); err != nil {
+        log.Printf("getting task: %s", err.Error())
+        return nil, repository.ErrorInternalQueryError
+    }
+
+    return &task, nil
+}
+
+func (r *TasksRepo) PostTask(key uuid.UUID, task *models.Task) error {
+    res, err := r.db.Exec(`INSERT INTO tasks (id, finished, translator, code)
+        VALUES ($1, false, $2, $3)`, key, &task.Translator, &task.Code)
+
+        if err != nil {
+            log.Printf("posting task: %s", err.Error())
+    
+            if err.(*pq.Error).Code == PqUniqueViolation {
+                return repository.ErrorUserAlreadyExists
+            } else {
+                return repository.ErrorInternalQueryError
+            }
+        }
+
+    if n, err := res.RowsAffected(); err != nil || n != 1 {
         return repository.ErrorTaskKeyAlreadyUsed
     }
-
-    newTask := models.Task{
-        Id: key,
-        Finished: false,
-        Code: code,
-    }
-    newTask.Code.TaskId = key
-    db.tasks[key] = &newTask
 
     return nil
 }
 
-func (db *TasksRepo) PutResult(key uuid.UUID, result *models.Result) error {
-    if _, ok := db.tasks[key]; !ok {
-        return repository.ErrorTaskNotFound
+func (r *TasksRepo) PutResult(key uuid.UUID, task *models.Task) error {
+    res, err := r.db.Exec(`UPDATE tasks SET finished = true, output = $1, status_code = $2`,
+        &task.Output, task.StatusCode)
+
+    if err != nil {
+        log.Printf("putting result: %s", err.Error())
+        return repository.ErrorInternalQueryError
     }
 
-    db.tasks[key].Result = result
-    db.tasks[key].Finished = true
+    if n, err := res.RowsAffected(); err != nil || n != 1 {
+        return repository.ErrorTaskNotFound
+    }
     
     return nil
 }

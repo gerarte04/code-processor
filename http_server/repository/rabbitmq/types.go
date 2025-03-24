@@ -8,10 +8,10 @@ type RabbitMQMessage struct {
     Code *string `json:"code"`
 }
 
-func CreateRabbitMQMessage(code *models.Code) *RabbitMQMessage {
+func CreateRabbitMQMessage(task *models.Task) *RabbitMQMessage {
     return &RabbitMQMessage{
-        TaskId: code.TaskId.String(),
-        Translator: code.Translator,
-        Code: &code.Code,
+        TaskId: task.Id.String(),
+        Translator: task.Translator,
+        Code: &task.Code,
     }
 }

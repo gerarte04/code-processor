@@ -139,7 +139,7 @@ func CreateGetResultObjectHandlerResponse(value *models.Task, err error) (*GetRe
     }
 
     return &GetResultObjectHandlerResponse{
-        Output: value.Result.Output,
+        Output: value.Output,
         //StatusCode: value.Result.StatusCode,
     }, nil
 }
@@ -204,7 +204,7 @@ func ProcessErrorPostUser(w http.ResponseWriter, err error, resp any) {
         http.Error(w, "Bad request", http.StatusBadRequest)
         w.Write([]byte(err.Error()))
         return
-    } else if err == repository.ErrorWrongPassword || err == usecases.ErrorUserSessionExists {
+    } else if err == repository.ErrorWrongUserCreds || err == usecases.ErrorUserSessionExists {
         http.Error(w, "Forbidden", http.StatusForbidden)
         w.Write([]byte(err.Error()))
         return

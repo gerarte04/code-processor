@@ -52,7 +52,7 @@ func NewRabbitMQSender(cfg config.RabbitMQConfig) (*RabbitMQSender, error) {
     }, nil
 }
 
-func (s *RabbitMQSender) Send(message *models.Code) error {
+func (s *RabbitMQSender) Send(message *models.Task) error {
     data, err := json.Marshal(CreateRabbitMQMessage(message))
 
     if err != nil {
