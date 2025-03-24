@@ -1,15 +1,13 @@
 package usecases
 
 import (
-	"code_processor/internal/api"
 	"code_processor/internal/models"
 )
 
 type ProcessingService interface {
-    Process(code *models.Code) (*api.ProcessingServiceResponse, error)
+    Process(code *models.Task) (*ProcessingServiceResponse, error)
 }
 
-type ResponseWriter interface {
-    WriteResponse(resp any) error
-    WriteError(taskId string, err error)
+type TasksService interface {
+    ServeTask(task *models.Task) error
 }

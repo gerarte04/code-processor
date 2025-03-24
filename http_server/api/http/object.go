@@ -5,8 +5,6 @@ import (
 	"http_server/repository/models"
 	"http_server/usecases"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 // Object represents an HTTP handler for managing objects.
@@ -129,25 +127,6 @@ func (s *Object) postLoginHandler(w http.ResponseWriter, r *http.Request) {
 
     value, err := s.usersService.LoginUser(req.Login, req.Password)
     types.ProcessErrorPostUser(w, err, &types.PostUserLoginObjectHandlerResponse{SessionId: value})
-}
-
-func (s *Object) putCommitHandler(w http.ResponseWriter, r *http.Request) {
-    req, err := types.CreatePutCommitObjectHandlerRequest(r)
-    if err = types.ProcessCreateError(w, err); err != nil {
-        return
-    }
-
-    id, err := uuid.Parse(req.TaskId)
-    if err != nil {
-        types.ProcessError(w, err, nil)
-    }
-
-    err = s.tasksService.CommitTaskResult(&models.Task{
-        Id: id,
-        Output: req.Output,
-        StatusCode: req.StatusCode,
-    })
-    types.ProcessError(w, err, nil)
 }
 
 func (s *Object) healthCheckHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,10 +1,10 @@
-package service
+package process
 
 import (
 	"bufio"
 	"code_processor/config"
-	"code_processor/internal/api"
 	"code_processor/internal/models"
+	"code_processor/internal/usecases"
 	"context"
 	"encoding/json"
 	"errors"
@@ -62,7 +62,7 @@ func NewCodeProcessor(cfg config.ProcessorConfig) (*CodeProcessor, error) {
     }, nil
 }
 
-func (p *CodeProcessor) CreateCodeFile(code *models.Code) error {
+func (p *CodeProcessor) CreateCodeFile(code *models.Task) error {
     ext, ok := extensions[code.Translator]
 
     if !ok {
@@ -85,7 +85,7 @@ func (p *CodeProcessor) CreateCodeFile(code *models.Code) error {
     return nil
 }
 
-func (p *CodeProcessor) BuildImage(code *models.Code) error {
+func (p *CodeProcessor) BuildImage(code *models.Task) error {
     ctx, cancel := context.WithTimeout(context.Background(), p.cfg.BuildTimeout)
     defer cancel()
 
@@ -138,7 +138,7 @@ func (p *CodeProcessor) BuildImage(code *models.Code) error {
     return nil
 }
 
-func (p *CodeProcessor) CreateAndRunContainer() (*api.ProcessingServiceResponse, error) {
+func (p *CodeProcessor) CreateAndRunContainer() (*usecases.ProcessingServiceResponse, error) {
     var resp container.CreateResponse
     resp, err := p.cli.ContainerCreate(context.Background(), &container.Config{
         Image: p.cfg.ImageName,
@@ -193,13 +193,13 @@ func (p *CodeProcessor) CreateAndRunContainer() (*api.ProcessingServiceResponse,
 
     str := string(buf)
 
-    return &api.ProcessingServiceResponse{
-        Output: &str,
+    return &usecases.ProcessingServiceResponse{
+        Output: str,
         StatusCode: statusCode,
     }, nil
 }
 
-func (p *CodeProcessor) Process(code *models.Code) (*api.ProcessingServiceResponse, error) {
+func (p *CodeProcessor) Process(code *models.Task) (*usecases.ProcessingServiceResponse, error) {
     err := p.CreateCodeFile(code)
 
     if err != nil {
@@ -210,7 +210,7 @@ func (p *CodeProcessor) Process(code *models.Code) (*api.ProcessingServiceRespon
         return nil, err
     }
 
-    var resp *api.ProcessingServiceResponse
+    var resp *usecases.ProcessingServiceResponse
 
     if resp, err = p.CreateAndRunContainer(); err != nil {
         return nil, err

@@ -3,8 +3,6 @@ package rabbitmq
 import (
 	"code_processor/config"
 	"code_processor/internal/api"
-	"code_processor/internal/models"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -77,14 +75,7 @@ func (s *RabbitMQReceiver) StartReceive() error {
     go func() {
         for m := range msgs {
             log.Printf("received message: %s", m.Body)
-            var code models.Code
-
-            if err := json.Unmarshal(m.Body, &code); err != nil {
-                log.Printf("converting to json: %s", err.Error())
-                continue
-            }
-
-            s.msgHandler.HandleMessage(&code)
+            s.msgHandler.HandleMessage(m.Body)
         }
     }()
 

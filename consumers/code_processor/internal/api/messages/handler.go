@@ -3,34 +3,29 @@ package messages
 import (
 	"code_processor/internal/models"
 	"code_processor/internal/usecases"
+	"encoding/json"
 	"log"
 )
 
 type MessageHandler struct {
-    procService usecases.ProcessingService
-    respWriter usecases.ResponseWriter
+    tasksService usecases.TasksService
 }
 
-func NewMessageHandler(procService usecases.ProcessingService, respWriter usecases.ResponseWriter) *MessageHandler {
+func NewMessageHandler(tasksService usecases.TasksService) *MessageHandler {
     return &MessageHandler{
-        procService: procService,
-        respWriter: respWriter,
+        tasksService: tasksService,
     }
 }
 
-func (h *MessageHandler) HandleMessage(message *models.Code) {
-    resp, err := h.procService.Process(message)
+func (h *MessageHandler) HandleMessage(message []byte) {
+    var code models.Task
 
-    if err != nil {
-        log.Printf("processing message: %s", err.Error())
-        h.respWriter.WriteError(message.TaskId, err)
+    if err := json.Unmarshal(message, &code); err != nil {
+        log.Printf("converting message to json: %s", err.Error())
         return
     }
 
-    err = h.respWriter.WriteResponse(CreateResponseObject(message, resp))
-
-    if err != nil {
-        log.Printf("writing response: %s", err.Error())
-        h.respWriter.WriteError(message.TaskId, err)
+    if err := h.tasksService.ServeTask(&code); err != nil {
+        log.Printf("%s", err.Error())
     }
 }

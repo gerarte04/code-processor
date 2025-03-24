@@ -9,7 +9,6 @@ import (
 type TasksService interface {
     GetTask(key uuid.UUID) (*models.Task, error)
     PostTask(task *models.Task) (*uuid.UUID, error)
-    CommitTaskResult(result *models.Task) error
 }
 
 type UsersService interface {

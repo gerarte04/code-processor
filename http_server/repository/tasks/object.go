@@ -67,19 +67,3 @@ func (r *TasksRepo) PostTask(key uuid.UUID, task *models.Task) error {
 
     return nil
 }
-
-func (r *TasksRepo) PutResult(key uuid.UUID, task *models.Task) error {
-    res, err := r.db.Exec(`UPDATE tasks SET finished = true, output = $1, status_code = $2`,
-        &task.Output, task.StatusCode)
-
-    if err != nil {
-        log.Printf("putting result: %s", err.Error())
-        return repository.ErrorInternalQueryError
-    }
-
-    if n, err := res.RowsAffected(); err != nil || n != 1 {
-        return repository.ErrorTaskNotFound
-    }
-    
-    return nil
-}

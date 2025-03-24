@@ -9,7 +9,6 @@ import (
 type TasksRepo interface {
     GetTask(key uuid.UUID) (*models.Task, error)
     PostTask(key uuid.UUID, task *models.Task) error
-    PutResult(key uuid.UUID, task *models.Task) error
 }
 
 type UsersRepo interface {

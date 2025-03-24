@@ -46,11 +46,3 @@ func (rs *TasksService) PostTask(task *models.Task) (*uuid.UUID, error) {
 
     return &key, nil
 }
-
-func (rs *TasksService) CommitTaskResult(result *models.Task) error {
-    if err := rs.tasksRepo.PutResult(result.Id, result); err != nil {
-        return err
-    }
-
-    return nil
-}

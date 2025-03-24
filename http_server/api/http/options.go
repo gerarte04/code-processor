@@ -16,8 +16,6 @@ const (
 
     postRegisterPath = "/register"
     postLoginPath = "/login"
-
-    putCommitPath = "/commit"
 )
 
 // WithObjectHandlers registers object-related HTTP handlers.
@@ -25,7 +23,6 @@ func (s *Object) WithFreeUserHandlers(r chi.Router) func(r chi.Router) {
     return func(r chi.Router) {
         r.Post(postRegisterPath, s.postRegisterHandler)
         r.Post(postLoginPath, s.postLoginHandler)
-        r.Put(putCommitPath, s.putCommitHandler)
         r.Get(healthCheckPath, s.healthCheckHandler)
     }
 }

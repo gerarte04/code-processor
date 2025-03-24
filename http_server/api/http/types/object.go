@@ -53,12 +53,6 @@ type PostTaskObjectHandlerRequest struct {
     Code string `json:"code"`
 }
 
-type PutCommitObjectHandlerRequest struct {
-    TaskId string `json:"task_id"`
-    Output string `json:"output"`
-    StatusCode int64 `json:"status_code"`
-}
-
 func CreatePostTaskObjectHandlerRequest(r *http.Request) (*PostTaskObjectHandlerRequest, error) {
     str, err := io.ReadAll(r.Body)
 
@@ -88,22 +82,6 @@ func CreatePostUserObjectHandlerRequest(r *http.Request) (*PostUserObjectHandler
     }
 
     var req PostUserObjectHandlerRequest
-
-    if err = json.Unmarshal([]byte(str), &req); err != nil {
-        return nil, err
-    }
-
-    return &req, nil
-}
-
-func CreatePutCommitObjectHandlerRequest(r *http.Request) (*PutCommitObjectHandlerRequest, error) {
-    str, err := io.ReadAll(r.Body)
-
-    if err != nil {
-        return nil, err
-    }
-
-    var req PutCommitObjectHandlerRequest
 
     if err = json.Unmarshal([]byte(str), &req); err != nil {
         return nil, err
