@@ -10,4 +10,6 @@ var (
     ErrorNoSessionExists = errors.New("There is no active session with such id\n")
 
     ErrorSessionExpired = errors.New("User session has expired, please login again\n")
+
+    ErrorInternalQueryError = errors.New("Internal database error\n")
 )

@@ -1,65 +1,80 @@
 package sessions
 
 import (
+	"context"
 	"http_server/config"
 	"http_server/pkg/generator"
 	"http_server/repository/models"
 	"http_server/usecases"
-	"time"
+	"log"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type SessionManager struct {
-    sessions map[string]*models.Session
+    db *redis.Client
+    ctx context.Context
     serviceCfg config.ServiceConfig
 }
 
 func NewSessionManager(serviceCfg config.ServiceConfig) *SessionManager {
+    db := redis.NewClient(&redis.Options{
+        Addr: "redis:6379",
+        Username: "admin-admin",
+        Password: "rds",
+        DB: 0,
+    })
+
     return &SessionManager{
-        sessions: make(map[string]*models.Session),
+        db: db,
+        ctx: context.Background(),
         serviceCfg: serviceCfg,
     }
 }
 
 func (sm *SessionManager) StartSession(userId uuid.UUID) (*models.Session, error) {
-    for _, v := range sm.sessions {
-        if v.UserId == userId {
-            if time.Now().After(v.ExpiresAt) {
-                sm.StopSession(v.SessionId)
-                break
-            } else {
-                return nil, usecases.ErrorUserSessionExists
-            }
-        }
+    newId := generator.NewSessionId()
+    res := sm.db.Set(sm.ctx, newId, userId.String(), sm.serviceCfg.SessionLivingTime)
+    
+    if res.Err() != nil {
+        log.Printf("starting session: putting to redis: %s", res.Err().Error())
+        return nil, usecases.ErrorInternalQueryError
     }
 
-    newId := generator.NewSessionId()
-
-    sm.sessions[newId] = &models.Session{
+    return &models.Session{
         UserId: userId,
         SessionId: newId,
-        ExpiresAt: time.Now().Add(sm.serviceCfg.SessionLivingTime),
-    }
-    return sm.sessions[newId], nil
+    }, nil
 }
 
 func (sm *SessionManager) StopSession(sessionId string) error {
-    if _, ok := sm.sessions[sessionId]; !ok {
-        return usecases.ErrorNoUserSessionExists
+    res := sm.db.Del(sm.ctx, sessionId)
+
+    if res.Err() != nil {
+        log.Printf("stopping session: delete from redis: %s", res.Err().Error())
+        return usecases.ErrorInternalQueryError
     }
 
-    delete(sm.sessions, sessionId)
     return nil
 }
 
 func (sm *SessionManager) GetSession(sessionId string) (*models.Session, error) {
-    if sess, ok := sm.sessions[sessionId]; !ok {
+    res := sm.db.Get(sm.ctx, sessionId)
+
+    if res.Err() == redis.Nil {
         return nil, usecases.ErrorNoSessionExists
-    } else if time.Now().After(sess.ExpiresAt) {
-        sm.StopSession(sess.SessionId)
-        return nil, usecases.ErrorSessionExpired
     } else {
-        return sess, nil
+        uuid, err := uuid.Parse(res.Val())
+
+        if err != nil {
+            log.Printf("getting session: parsing uuid: %s", err)
+            return nil, usecases.ErrorInternalQueryError
+        }
+
+        return &models.Session{
+            UserId: uuid,
+            SessionId: sessionId,
+        }, nil
     }
 }
