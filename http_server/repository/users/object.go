@@ -1,6 +1,8 @@
 package users
 
 import (
+	"fmt"
+	"http_server/config"
 	"http_server/repository"
 	"http_server/repository/models"
 	"log"
@@ -17,9 +19,13 @@ const (
 
 type UsersRepo struct {
     db *sqlx.DB
+    cfg config.PostgreSQLConfig
 }
 
-func NewUsersRepo(connStr string) (*UsersRepo, error) {
+func NewUsersRepo(cfg config.PostgreSQLConfig) (*UsersRepo, error) {
+    connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
+        cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
+    )
     db, err := sqlx.Connect("postgres", connStr)
 
     if err != nil {

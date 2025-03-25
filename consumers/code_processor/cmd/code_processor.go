@@ -15,16 +15,14 @@ func main() {
     var cfg config.Config
     config.LoadConfig(appFlags.ConfigPath, &cfg)
 
-    tasksRepo, err := tasks.NewTasksRepo("host=postgres port=5432 dbname=postgres_db user=admin password=admin sslmode=disable")
+    tasksRepo, err := tasks.NewTasksRepo(cfg.PostgresCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
-        return
     }
 
     procService, err := process.NewCodeProcessor(cfg.ProcCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
-        return
     }
 
     tasksService := service.NewTasksService(procService, tasksRepo)
@@ -33,7 +31,6 @@ func main() {
 
     if err != nil {
         log.Fatalf("%s", err.Error())
-        return
     }
 
     if err = rabbitMqReceiver.StartReceive(); err != nil {

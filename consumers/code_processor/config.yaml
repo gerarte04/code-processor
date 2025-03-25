@@ -1,5 +1,4 @@
 rabbitmq:
-  authority: guest:guest
   queue_name: code_transfer
 processor:
   container_name: code_container

@@ -9,10 +9,18 @@ import (
 )
 
 type RabbitMQConfig struct {
-    Authority string `yaml:"authority" env-default:"guest:guest"`
+    Authority string `yaml:"authority" env:"BROKER_AUTHORITY" env-default:"guest:guest"`
     Host string `yaml:"host" env:"BROKER_HOST"`
     Port string `yaml:"port" env:"BROKER_PORT"`
     QueueName string `yaml:"queue_name"`
+}
+
+type PostgreSQLConfig struct {
+    Host string `yaml:"host" env:"POSTGRES_HOST"`
+    Port string `yaml:"port" env:"POSTGRES_PORT"`
+    DB string `yaml:"db" env:"POSTGRES_DB"`
+    User string `yaml:"user" env:"POSTGRES_USER"`
+    Password string `yaml:"password" env:"POSTGRES_PASSWORD"`
 }
 
 type ProcessorConfig struct {
@@ -27,6 +35,7 @@ type ProcessorConfig struct {
 
 type Config struct {
     RabbMQCfg RabbitMQConfig `yaml:"rabbitmq"`
+    PostgresCfg PostgreSQLConfig `yaml:"postgres"`
     ProcCfg ProcessorConfig `yaml:"processor"`
 }
 

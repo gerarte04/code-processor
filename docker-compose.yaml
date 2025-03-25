@@ -4,13 +4,13 @@ services:
       dockerfile: http_server/Dockerfile
     ports:
       - 8080:8080
-    environment:
-      - BROKER_HOST=broker
-      - BROKER_PORT=5672
+    env_file: .env
     depends_on:
       consumer:
         condition: service_started
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: curl --fail -X GET http://http_server:8080/health || exit 1
@@ -21,9 +21,9 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      - POSTGRES_DB=postgres_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - "5430:5432"
@@ -42,15 +42,24 @@ services:
   redis:
     image: redis:latest
     environment:
-      - REDIS_PASSWORD=rds
-      - REDIS_USER=admin
-      - REDIS_USER_PASSWORD=admin
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
     ports:
       - "6380:6379"
     volumes:
-      - /home/${USER}/.redisdata:/.redisdata
+      - /home/${USER}/.redisdata:/data
+    command: >
+      sh -c '
+        mkdir -p /usr/local/etc/redis &&
+        echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf &&
+        echo "requirepass $REDIS_PASSWORD" >> /usr/local/etc/redis/redis.conf &&
+        echo "user default on nopass ~* +@all" > /usr/local/etc/redis/users.acl &&
+        echo "user $REDIS_USER on >$REDIS_USER_PASSWORD ~* +@all" >> /usr/local/etc/redis/users.acl &&
+        redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
+      '
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "rds", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 12s
       timeout: 10s
       retries: 3
@@ -69,9 +78,7 @@ services:
   consumer:
     build:
       dockerfile: consumers/code_processor/Dockerfile
-    environment:
-      - BROKER_HOST=broker
-      - BROKER_PORT=5672
+    env_file: .env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
@@ -82,8 +89,8 @@ services:
     build:
       dockerfile: tests/Dockerfile
     environment:
-      - HTTP_HOST=http_server
-      - HTTP_PORT=8080
+      - HTTP_HOST=${HTTP_HOST}
+      - HTTP_PORT=${HTTP_PORT}
     profiles:
       - test
     depends_on:

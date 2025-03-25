@@ -1,6 +1,8 @@
 package tasks
 
 import (
+	"fmt"
+	"http_server/config"
 	"http_server/repository"
 	"http_server/repository/models"
 	"log"
@@ -17,9 +19,13 @@ const (
 
 type TasksRepo struct {
     db *sqlx.DB
+    cfg config.PostgreSQLConfig
 }
 
-func NewTasksRepo(connStr string) (*TasksRepo, error) {
+func NewTasksRepo(cfg config.PostgreSQLConfig) (*TasksRepo, error) {
+    connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
+        cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
+    )
     db, err := sqlx.Connect("postgres", connStr)
 
     if err != nil {

@@ -2,7 +2,6 @@ http:
   host: 
   port: 8080
 rabbitmq:
-  authority: guest:guest
   queue_name: code_transfer
 service:
   session_living_time: 30m
