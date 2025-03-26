@@ -36,13 +36,15 @@ func main() {
         log.Fatalf("%s", err.Error())
     }
 
-    http.Handle("/metrics", promhttp.Handler())
-    if err = http.ListenAndServe(":2112", nil); err != nil {
+    
+    if err = rabbitMqReceiver.StartReceive(); err != nil {
+        rabbitMqReceiver.Close()
         log.Fatalf("%s", err.Error())
     }
 
-    if err = rabbitMqReceiver.StartReceive(); err != nil {
-        rabbitMqReceiver.Close()
+    http.Handle("/metrics", promhttp.Handler())
+    
+    if err = http.ListenAndServe(":2112", nil); err != nil {
         log.Fatalf("%s", err.Error())
     }
 }

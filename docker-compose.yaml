@@ -32,7 +32,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d postgres_db" ]
-      interval: 15s
+      interval: 12s
       timeout: 10s
       retries: 3
     restart: unless-stopped
@@ -62,7 +62,7 @@ services:
       '
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 15s
+      interval: 12s
       timeout: 10s
       retries: 3
 
@@ -73,7 +73,7 @@ services:
       - 15672:15672
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 20s
+      interval: 12s
       timeout: 30s
       retries: 3
 
@@ -94,7 +94,14 @@ services:
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+
+  grafana:
+    image: grafana/grafana
+    ports:
+    - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=adminpass
 
   tester:
     build:

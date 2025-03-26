@@ -12,7 +12,7 @@ var (
 	opsProcessed = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "consumer_processed_ops_total",
 		Help: "The total number of processed events",
-	}, []string{"gcc", "clang", "python3"})
+	}, []string{"translator"})
 
     opsTimes = promauto.NewGauge(prometheus.GaugeOpts{
         Name: "consumer_ops_processing_time",
@@ -21,14 +21,16 @@ var (
 )
 
 func CollectMetrics(resp *usecases.ProcessingServiceResponse) error {
-    cntr, err := opsProcessed.GetMetricWithLabelValues(resp.Translator)
+    cntr, err := opsProcessed.GetMetricWith(prometheus.Labels{
+        "translator": resp.Translator,
+    })
 
     if err != nil {
         return err
     }
 
     cntr.Inc()
-    opsTimes.Add(resp.ProcessingTime.Seconds())
+    opsTimes.Set(resp.ProcessingTime.Seconds())
 
     return nil
 }

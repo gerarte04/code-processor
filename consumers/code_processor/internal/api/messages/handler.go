@@ -25,7 +25,11 @@ func (h *MessageHandler) HandleMessage(message []byte) {
         return
     }
 
+    log.Println("start serving")
+
     if err := h.tasksService.ServeTask(&code); err != nil {
         log.Printf("%s", err.Error())
     }
+
+    log.Println("end serving")
 }

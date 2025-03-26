@@ -70,8 +70,6 @@ func (s *RabbitMQReceiver) StartReceive() error {
         return fmt.Errorf("rabbitmq, starting consuming: %s", err.Error())
     }
 
-    var forever chan struct{}
-
     go func() {
         for m := range msgs {
             log.Printf("received message: %s", m.Body)
@@ -79,7 +77,6 @@ func (s *RabbitMQReceiver) StartReceive() error {
         }
     }()
 
-    <-forever
     return nil
 }
 
