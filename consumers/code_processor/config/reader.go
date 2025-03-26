@@ -33,10 +33,15 @@ type ProcessorConfig struct {
     RunTimeout time.Duration `yaml:"run_timeout" env-default:"10m"`
 }
 
+type PrometheusConfig struct {
+    ListenPort string `yaml:"listen_port" env:"PROM_LISTEN_PORT"`
+}
+
 type Config struct {
     RabbMQCfg RabbitMQConfig `yaml:"rabbitmq"`
     PostgresCfg PostgreSQLConfig `yaml:"postgres"`
     ProcCfg ProcessorConfig `yaml:"processor"`
+    PromCfg PrometheusConfig `yaml:"prometheus"`
 }
 
 func LoadConfig(path string, cfg any) {

@@ -9,10 +9,10 @@ import (
 
 
 var (
-	opsProcessed = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "consumer_processed_ops_total",
-		Help: "The total number of processed events",
-	}, []string{"translator"})
+    opsProcessed = promauto.NewCounterVec(prometheus.CounterOpts{
+        Name: "consumer_processed_ops_total",
+        Help: "The total number of processed events",
+    }, []string{"translator"})
 
     opsTimes = promauto.NewGauge(prometheus.GaugeOpts{
         Name: "consumer_ops_processing_time",

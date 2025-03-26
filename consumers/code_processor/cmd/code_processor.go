@@ -44,7 +44,7 @@ func main() {
 
     http.Handle("/metrics", promhttp.Handler())
     
-    if err = http.ListenAndServe(":2112", nil); err != nil {
+    if err = http.ListenAndServe(":" + cfg.PromCfg.ListenPort, nil); err != nil {
         log.Fatalf("%s", err.Error())
     }
 }
