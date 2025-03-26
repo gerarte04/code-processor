@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -211,10 +212,15 @@ func (p *CodeProcessor) Process(code *models.Task) (*usecases.ProcessingServiceR
     }
 
     var resp *usecases.ProcessingServiceResponse
+    start := time.Now()
 
     if resp, err = p.CreateAndRunContainer(); err != nil {
         return nil, err
     }
+
+    dur := time.Now().Sub(start)
+    resp.ProcessingTime = dur
+    resp.Translator = code.Translator
 
     return resp, nil
 }

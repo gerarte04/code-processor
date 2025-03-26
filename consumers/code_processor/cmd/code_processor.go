@@ -8,6 +8,9 @@ import (
 	"code_processor/internal/usecases/process"
 	"code_processor/internal/usecases/service"
 	"log"
+	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -30,6 +33,11 @@ func main() {
     rabbitMqReceiver, err := rabbMq.NewRabbitMQReceiver(cfg.RabbMQCfg, msgHandler)
 
     if err != nil {
+        log.Fatalf("%s", err.Error())
+    }
+
+    http.Handle("/metrics", promhttp.Handler())
+    if err = http.ListenAndServe(":2112", nil); err != nil {
         log.Fatalf("%s", err.Error())
     }
 
