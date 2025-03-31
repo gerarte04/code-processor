@@ -17,6 +17,12 @@ type UsersRepo interface {
     PostUser(key uuid.UUID, login string, password string) error
 }
 
+type SessionStorage interface {
+    CreateSession(userId uuid.UUID) (*models.Session, error)
+    DeleteSession(sessionId string) error
+    GetSession(sessionId string) (*models.Session, error)
+}
+
 type BrokerSender interface {
     Send(*models.Task) error
     Close()

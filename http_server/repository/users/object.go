@@ -1,44 +1,25 @@
 package users
 
 import (
-	"fmt"
-	"http_server/config"
+	"http_server/pkg/database"
 	"http_server/repository"
 	"http_server/repository/models"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	_ "github.com/lib/pq"
-)
-
-const (
-    PqUniqueViolation = "23505"
 )
 
 type UsersRepo struct {
     db *sqlx.DB
-    cfg config.PostgreSQLConfig
+    ep database.DBErrorProcessor
 }
 
-func NewUsersRepo(cfg config.PostgreSQLConfig) (*UsersRepo, error) {
-    connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-        cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
-    )
-    db, err := sqlx.Connect("postgres", connStr)
-
-    if err != nil {
-        return nil, err
-    }
-
-    if err = db.Ping(); err != nil {
-        return nil, err
-    }
-
+func NewUsersRepo(db *sqlx.DB, ep database.DBErrorProcessor) *UsersRepo {
     return &UsersRepo{
         db: db,
-    }, nil
+        ep: ep,
+    }
 }
 
 func (r *UsersRepo) GetUser(key uuid.UUID) (*models.User, error) {
@@ -72,7 +53,7 @@ func (r *UsersRepo) PostUser(key uuid.UUID, login string, password string) error
     if err != nil {
         log.Printf("posting user: %s", err.Error())
 
-        if err.(*pq.Error).Code == PqUniqueViolation {
+        if r.ep.ProcessError(err) == database.ErrorUniqueViolation {
             return repository.ErrorUserAlreadyExists
         } else {
             return repository.ErrorInternalQueryError

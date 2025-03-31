@@ -13,14 +13,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type SessionManager struct {
+type SessionStorage struct {
     cli *redis.Client
     ctx context.Context
     serviceCfg config.ServiceConfig
     redisCfg config.RedisConfig
 }
 
-func NewSessionManager(serviceCfg config.ServiceConfig, redisCfg config.RedisConfig) (*SessionManager, error) {
+func NewSessionStorage(serviceCfg config.ServiceConfig, redisCfg config.RedisConfig) (*SessionStorage, error) {
     cli := redis.NewClient(&redis.Options{
         Addr: fmt.Sprintf("%s:%s", redisCfg.Host, redisCfg.Port),
         Username: redisCfg.User,
@@ -34,7 +34,7 @@ func NewSessionManager(serviceCfg config.ServiceConfig, redisCfg config.RedisCon
         return nil, err
     }
 
-    return &SessionManager{
+    return &SessionStorage{
         cli: cli,
         ctx: context.Background(),
         serviceCfg: serviceCfg,
@@ -42,7 +42,7 @@ func NewSessionManager(serviceCfg config.ServiceConfig, redisCfg config.RedisCon
     }, nil
 }
 
-func (sm *SessionManager) StartSession(userId uuid.UUID) (*models.Session, error) {
+func (sm *SessionStorage) CreateSession(userId uuid.UUID) (*models.Session, error) {
     newId := generator.NewSessionId()
     err := sm.cli.Set(sm.ctx, newId, userId.String(), sm.serviceCfg.SessionLivingTime).Err()
     
@@ -57,7 +57,7 @@ func (sm *SessionManager) StartSession(userId uuid.UUID) (*models.Session, error
     }, nil
 }
 
-func (sm *SessionManager) StopSession(sessionId string) error {
+func (sm *SessionStorage) DeleteSession(sessionId string) error {
     err := sm.cli.Del(sm.ctx, sessionId).Err()
 
     if err != nil {
@@ -68,7 +68,7 @@ func (sm *SessionManager) StopSession(sessionId string) error {
     return nil
 }
 
-func (sm *SessionManager) GetSession(sessionId string) (*models.Session, error) {
+func (sm *SessionStorage) GetSession(sessionId string) (*models.Session, error) {
     res, err := sm.cli.Get(sm.ctx, sessionId).Result()
 
     if err == redis.Nil {

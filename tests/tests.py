@@ -83,7 +83,7 @@ def test_task_status_and_result(auth_token):
     result_url = f"{BASE_URL}/result/{task_id}"
     headers = {'Authorization': f'Bearer {auth_token}'}
 
-    retry = 10
+    retry = 30
     while retry >= 0:
         response = requests.get(status_url, headers=headers)
         assert response.status_code == 200

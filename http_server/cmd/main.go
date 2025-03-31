@@ -6,11 +6,12 @@ import (
 	"http_server/config"
 	_ "http_server/docs"
 	"http_server/middlewares/auth"
+	"http_server/pkg/database/postgres"
 	pkgHttp "http_server/pkg/http"
 	rabbMq "http_server/repository/rabbitmq"
+	redis "http_server/repository/redis"
 	tasksRepo "http_server/repository/tasks"
 	usersRepo "http_server/repository/users"
-	"http_server/usecases/sessions"
 	tasksService "http_server/usecases/tasks"
 	usersService "http_server/usecases/users"
 	"log"
@@ -30,17 +31,16 @@ func main() {
     var cfg config.Config
     config.LoadConfig(appFlags.ConfigPath, &cfg)
 
-    tasksRepo, err := tasksRepo.NewTasksRepo(cfg.PostgresCfg)
+    pgDb, err := postgres.NewPostgresClient(cfg.PostgresCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
     }
 
-    usersRepo, err := usersRepo.NewUsersRepo(cfg.PostgresCfg)
-    if err != nil {
-        log.Fatalf("%s", err.Error())
-    }
+    errProc := postgres.NewPostgresErrorProcessor()
+    tasksRepo := tasksRepo.NewTasksRepo(pgDb, errProc)
+    usersRepo := usersRepo.NewUsersRepo(pgDb, errProc)
 
-    sessMgr, err := sessions.NewSessionManager(cfg.ServiceCfg, cfg.RedisCfg)
+    sessStg, err := redis.NewSessionStorage(cfg.ServiceCfg, cfg.RedisCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
     }
@@ -51,10 +51,10 @@ func main() {
     }
 
     tasksService := tasksService.NewObject(tasksRepo, rabbitMQSender)
-    usersService := usersService.NewObject(usersRepo, sessMgr)
+    usersService := usersService.NewObject(usersRepo, sessStg)
     handler := http.NewHandler(tasksService, usersService)
-    authMiddleware := auth.NewObject(sessMgr)
-    
+    authMiddleware := auth.NewObject(sessStg)
+
     r := chi.NewRouter()
     handler.RouteHandlers(r,
         handler.WithFreeUserHandlers(r),

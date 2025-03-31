@@ -1,44 +1,25 @@
 package tasks
 
 import (
-	"fmt"
-	"http_server/config"
+	"http_server/pkg/database"
 	"http_server/repository"
 	"http_server/repository/models"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	_ "github.com/lib/pq"
-)
-
-const (
-    PqUniqueViolation = "23505"
 )
 
 type TasksRepo struct {
     db *sqlx.DB
-    cfg config.PostgreSQLConfig
+    ep database.DBErrorProcessor
 }
 
-func NewTasksRepo(cfg config.PostgreSQLConfig) (*TasksRepo, error) {
-    connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-        cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
-    )
-    db, err := sqlx.Connect("postgres", connStr)
-
-    if err != nil {
-        return nil, err
-    }
-
-    if err = db.Ping(); err != nil {
-        return nil, err
-    }
-
+func NewTasksRepo(db *sqlx.DB, ep database.DBErrorProcessor) *TasksRepo {
     return &TasksRepo{
         db: db,
-    }, nil
+        ep: ep,
+    }
 }
 
 func (r *TasksRepo) GetTask(key uuid.UUID) (*models.Task, error) {
@@ -60,8 +41,8 @@ func (r *TasksRepo) PostTask(key uuid.UUID, task *models.Task) error {
         if err != nil {
             log.Printf("posting task: %s", err.Error())
     
-            if err.(*pq.Error).Code == PqUniqueViolation {
-                return repository.ErrorUserAlreadyExists
+            if r.ep.ProcessError(err) == database.ErrorUniqueViolation {
+                return repository.ErrorTaskKeyAlreadyUsed
             } else {
                 return repository.ErrorInternalQueryError
             }

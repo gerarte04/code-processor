@@ -2,20 +2,19 @@ package users
 
 import (
 	"http_server/repository"
-	"http_server/usecases"
 
 	"github.com/google/uuid"
 )
 
 type UsersService struct {
     usersRepo repository.UsersRepo
-    sessMgr usecases.SessionManager
+    sessStg repository.SessionStorage
 }
 
-func NewObject(usersRepo repository.UsersRepo, sessMgr usecases.SessionManager) *UsersService {
+func NewObject(usersRepo repository.UsersRepo, sessStg repository.SessionStorage) *UsersService {
     return &UsersService{
         usersRepo: usersRepo,
-        sessMgr: sessMgr,
+        sessStg: sessStg,
     }
 }
 
@@ -26,7 +25,7 @@ func (rs *UsersService) RegisterUser(login string, password string) error {
 func (rs *UsersService) LoginUser(login string, password string) (string, error) {
     if user, err := rs.usersRepo.GetUserByCred(login, password); err != nil {
         return "", err
-    } else if sess, err := rs.sessMgr.StartSession(user.Id); err != nil {
+    } else if sess, err := rs.sessStg.CreateSession(user.Id); err != nil {
         return "", err
     } else {
         return sess.SessionId, nil

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"http_server/usecases"
+	"http_server/repository"
 	"net/http"
 	"strings"
 )
@@ -11,12 +11,12 @@ const (
 )
 
 type AuthMiddleware struct {
-    sessMgr usecases.SessionManager
+    sessStg repository.SessionStorage
 }
 
-func NewObject(sessMgr usecases.SessionManager) *AuthMiddleware {
+func NewObject(sessStg repository.SessionStorage) *AuthMiddleware {
     return &AuthMiddleware{
-        sessMgr: sessMgr,
+        sessStg: sessStg,
     }
 }
 
@@ -35,7 +35,7 @@ func (am *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
         if sessId, err := GetSessionId(r); err != nil {
             http.Error(w, err.Error(), http.StatusUnauthorized)
             return
-        } else if _, err := am.sessMgr.GetSession(sessId); err != nil {
+        } else if _, err := am.sessStg.GetSession(sessId); err != nil {
             http.Error(w, err.Error(), http.StatusUnauthorized)
             return
         }
