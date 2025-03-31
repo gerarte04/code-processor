@@ -5,13 +5,12 @@ datasources:
     type: prometheus
     access: proxy
     url: http://prometheus:9090
+    uid: ds_prometheus_uid
     jsonData:
       httpMethod: POST
       manageAlerts: true
       prometheusType: Prometheus
       cacheLevel: 'High'
+      timeInterval: 5s
       disableRecordingRules: false
       incrementalQueryOverlapWindow: 10m
-      exemplarTraceIdDestinations:
-        - datasourceUid: ds_prometheus_uid
-          name: traceID
