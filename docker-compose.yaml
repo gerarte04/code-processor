@@ -50,8 +50,11 @@ services:
     volumes:
       - /home/${USER}/.redisdata:/data
       - ./redis/init.sh:/etc/redis/init.sh
-    command: >
-      sh -c /etc/redis/init.sh
+    command: > 
+      sh -c "
+        chmod a+x /etc/redis/init.sh &&
+        /etc/redis/init.sh
+      "
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 12s
@@ -65,7 +68,7 @@ services:
       - 15672:15672
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 12s
+      interval: 20s
       timeout: 30s
       retries: 3
 

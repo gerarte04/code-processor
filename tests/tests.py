@@ -10,13 +10,13 @@ BASE_URL = "http://" + os.getenv("HTTP_HOST") + ":" + os.getenv("HTTP_PORT")
 @pytest.fixture(scope='module')
 def user_data():
     username = f'user_{uuid.uuid4()}'
-    password = 'password228'
+    password = 'pass_word'
     return {'username': username, 'password': password}
 
 @pytest.fixture(scope='module')
 def user_data_another():
     username = 'kingmidashellyeah'
-    password = 'ya_eblan'
+    password = 'korol_midas'
     return {'username': username, 'password': password}
 
 @pytest.fixture(scope='module')
@@ -50,21 +50,11 @@ def test_login_user(user_data_another):
 def get_code_processor_payload():
     return {"translator": "python3", "code": "print('Hello, stdout world!')"}
 
-def get_image_processor_payload():
-    with open("static/sigma.png", "rb") as image_file:
-        image_bytes = image_file.read()
-
-    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    return {"filter": {"name": "Negative"}, "image": image_base64}
-
 def test_create_task(auth_token):
     task_url = f"{BASE_URL}/task"
     headers = {'Authorization': f'Bearer {auth_token}'}
 
-    # payload = dict()
     payload = get_code_processor_payload()
-    # payload = get_image_processor_payload()
-
 
     if len(payload) == 0:
         raise NotImplemented("Choose one of the variants for payload!")
