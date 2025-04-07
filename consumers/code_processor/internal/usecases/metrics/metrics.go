@@ -1,7 +1,8 @@
 package metrics
 
 import (
-	"code_processor/internal/usecases"
+	"cpapp/consumers/code_processor/internal/usecases"
+	"log"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -26,7 +27,7 @@ func CollectMetrics(resp *usecases.ProcessingServiceResponse) error {
     })
 
     if err != nil {
-        return err
+        log.Printf("failed to collect metrics: %s", err.Error())
     }
 
     cntr.Inc()

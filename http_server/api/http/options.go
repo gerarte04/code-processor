@@ -1,7 +1,7 @@
 package http
 
 import (
-	"http_server/middlewares"
+	"cpapp/http_server/middlewares"
 
 	"github.com/go-chi/chi/v5"
 )

@@ -1,8 +1,8 @@
 package messages
 
 import (
-	"code_processor/internal/models"
-	"code_processor/internal/usecases"
+	"cpapp/consumers/code_processor/internal/models"
+	"cpapp/consumers/code_processor/internal/usecases"
 	"encoding/json"
 	"log"
 )

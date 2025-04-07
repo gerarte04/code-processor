@@ -1,8 +1,7 @@
 package tasks
 
 import (
-	"code_processor/config"
-	"code_processor/internal/models"
+	"cpapp/consumers/code_processor/internal/models"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -11,26 +10,12 @@ import (
 
 type TasksRepo struct {
     db *sqlx.DB
-    cfg config.PostgreSQLConfig
 }
 
-func NewTasksRepo(cfg config.PostgreSQLConfig) (*TasksRepo, error) {
-    connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-        cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
-    )
-    db, err := sqlx.Connect("postgres", connStr)
-
-    if err != nil {
-        return nil, err
-    }
-
-    if err = db.Ping(); err != nil {
-        return nil, err
-    }
-
+func NewTasksRepo(db *sqlx.DB) *TasksRepo {
     return &TasksRepo{
         db: db,
-    }, nil
+    }
 }
 
 func (r *TasksRepo) PutResult(key string, task *models.Task) error {

@@ -2,10 +2,10 @@ package process
 
 import (
 	"bufio"
-	"code_processor/config"
-	"code_processor/internal/models"
-	"code_processor/internal/usecases"
 	"context"
+	"cpapp/consumers/code_processor/config"
+	"cpapp/consumers/code_processor/internal/models"
+	"cpapp/consumers/code_processor/internal/usecases"
 	"encoding/json"
 	"errors"
 	"fmt"

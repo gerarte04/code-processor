@@ -1,10 +1,10 @@
 package rabbitmq
 
 import (
+	"cpapp/http_server/repository/models"
+	"cpapp/pkg/config/types"
 	"encoding/json"
 	"fmt"
-	"http_server/config"
-	"http_server/repository/models"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -14,10 +14,10 @@ type RabbitMQSender struct {
     ch *amqp.Channel
     queue *amqp.Queue
 
-    cfg config.RabbitMQConfig
+    cfg types.RabbitMQConfig
 }
 
-func NewRabbitMQSender(cfg config.RabbitMQConfig) (*RabbitMQSender, error) {
+func NewRabbitMQSender(cfg types.RabbitMQConfig) (*RabbitMQSender, error) {
     url := fmt.Sprintf("amqp://%s@%s:%s", cfg.Authority, cfg.Host, cfg.Port)
     conn, err := amqp.Dial(url)
 

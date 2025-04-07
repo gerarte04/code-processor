@@ -1,10 +1,10 @@
 package service
 
 import (
-	"code_processor/internal/models"
-	"code_processor/internal/repository"
-	"code_processor/internal/usecases"
-	"code_processor/internal/usecases/metrics"
+	"cpapp/consumers/code_processor/internal/models"
+	"cpapp/consumers/code_processor/internal/repository"
+	"cpapp/consumers/code_processor/internal/usecases"
+	"cpapp/consumers/code_processor/internal/usecases/metrics"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,9 +34,7 @@ func (s *TasksService) ServeTask(task *models.Task) error {
         return s.ServeError(fmt.Sprintf("processing task: %s", err.Error()), task)
     }
 
-    if err = metrics.CollectMetrics(resp); err != nil {
-        return fmt.Errorf("collecting metrics: %s", err.Error())
-    }
+    go metrics.CollectMetrics(resp)
 
     task.Output = strings.ReplaceAll(resp.Output, "\u0000", "")
     task.StatusCode = resp.StatusCode

@@ -1,9 +1,10 @@
 package tasks
 
 import (
-	"http_server/pkg/database"
-	"http_server/repository"
-	"http_server/repository/models"
+	"cpapp/http_server/repository"
+	"cpapp/http_server/repository/models"
+	"cpapp/pkg/database"
+	"cpapp/pkg/database/postgres"
 	"log"
 
 	"github.com/google/uuid"
@@ -12,13 +13,11 @@ import (
 
 type TasksRepo struct {
     db *sqlx.DB
-    ep database.DBErrorProcessor
 }
 
-func NewTasksRepo(db *sqlx.DB, ep database.DBErrorProcessor) *TasksRepo {
+func NewTasksRepo(db *sqlx.DB) *TasksRepo {
     return &TasksRepo{
         db: db,
-        ep: ep,
     }
 }
 
@@ -41,7 +40,7 @@ func (r *TasksRepo) PostTask(key uuid.UUID, task *models.Task) error {
         if err != nil {
             log.Printf("posting task: %s", err.Error())
     
-            if r.ep.ProcessError(err) == database.ErrorUniqueViolation {
+            if postgres.ProcessError(err) == database.ErrorUniqueViolation {
                 return repository.ErrorTaskKeyAlreadyUsed
             } else {
                 return repository.ErrorInternalQueryError

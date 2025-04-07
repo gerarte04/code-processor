@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"http_server/repository"
+	"cpapp/http_server/repository"
 	"net/http"
 	"strings"
 )

@@ -1,6 +1,6 @@
 package rabbitmq
 
-import "http_server/repository/models"
+import "cpapp/http_server/repository/models"
 
 type RabbitMQMessage struct {
     TaskId string `json:"task_id"`

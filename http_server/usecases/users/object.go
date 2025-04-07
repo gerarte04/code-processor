@@ -1,7 +1,7 @@
 package users
 
 import (
-	"http_server/repository"
+	"cpapp/http_server/repository"
 
 	"github.com/google/uuid"
 )

@@ -2,11 +2,12 @@ package sessions
 
 import (
 	"context"
+	"cpapp/http_server/config"
+	"cpapp/http_server/repository/models"
+	"cpapp/http_server/usecases"
+	"cpapp/pkg/config/types"
+	"cpapp/pkg/generator"
 	"fmt"
-	"http_server/config"
-	"http_server/pkg/generator"
-	"http_server/repository/models"
-	"http_server/usecases"
 	"log"
 
 	"github.com/google/uuid"
@@ -17,10 +18,10 @@ type SessionStorage struct {
     cli *redis.Client
     ctx context.Context
     serviceCfg config.ServiceConfig
-    redisCfg config.RedisConfig
+    redisCfg types.RedisConfig
 }
 
-func NewSessionStorage(serviceCfg config.ServiceConfig, redisCfg config.RedisConfig) (*SessionStorage, error) {
+func NewSessionStorage(serviceCfg config.ServiceConfig, redisCfg types.RedisConfig) (*SessionStorage, error) {
     cli := redis.NewClient(&redis.Options{
         Addr: fmt.Sprintf("%s:%s", redisCfg.Host, redisCfg.Port),
         Username: redisCfg.User,

@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"code_processor/internal/models"
+	"cpapp/consumers/code_processor/internal/models"
 )
 
 type ProcessingService interface {

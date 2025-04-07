@@ -1,9 +1,9 @@
 package http
 
 import (
-	"http_server/api/http/types"
-	"http_server/repository/models"
-	"http_server/usecases"
+	"cpapp/http_server/api/http/types"
+	"cpapp/http_server/repository/models"
+	"cpapp/http_server/usecases"
 	"net/http"
 )
 

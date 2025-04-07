@@ -1,8 +1,8 @@
 package tasks_service
 
 import (
-	"http_server/repository"
-	"http_server/repository/models"
+	"cpapp/http_server/repository"
+	"cpapp/http_server/repository/models"
 
 	"github.com/google/uuid"
 )

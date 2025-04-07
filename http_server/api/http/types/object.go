@@ -1,10 +1,10 @@
 package types
 
 import (
+	"cpapp/http_server/repository"
+	"cpapp/http_server/repository/models"
+	"cpapp/http_server/usecases"
 	"encoding/json"
-	"http_server/repository"
-	"http_server/repository/models"
-	"http_server/usecases"
 	"io"
 	"net/http"
 	"path"

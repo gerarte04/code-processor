@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"http_server/repository/models"
+	"cpapp/http_server/repository/models"
 
 	"github.com/google/uuid"
 )

@@ -1,12 +1,14 @@
 package main
 
 import (
-	"code_processor/config"
-	"code_processor/internal/api/messages"
-	rabbMq "code_processor/internal/rabbitmq"
-	tasks "code_processor/internal/repository/tasks"
-	"code_processor/internal/usecases/process"
-	"code_processor/internal/usecases/service"
+	"cpapp/consumers/code_processor/config"
+	"cpapp/consumers/code_processor/internal/api/messages"
+	rabbMq "cpapp/consumers/code_processor/internal/rabbitmq"
+	tasks "cpapp/consumers/code_processor/internal/repository/tasks"
+	"cpapp/consumers/code_processor/internal/usecases/process"
+	"cpapp/consumers/code_processor/internal/usecases/service"
+	pkgConfig "cpapp/pkg/config"
+	"cpapp/pkg/database/postgres"
 	"log"
 	"net/http"
 
@@ -14,14 +16,16 @@ import (
 )
 
 func main() {
-    appFlags := config.ParseFlags()
+    appFlags := pkgConfig.ParseFlags()
     var cfg config.Config
-    config.LoadConfig(appFlags.ConfigPath, &cfg)
+    pkgConfig.LoadConfig(appFlags.ConfigPath, &cfg)
 
-    tasksRepo, err := tasks.NewTasksRepo(cfg.PostgresCfg)
+    db, err := postgres.NewPostgresClient(cfg.PostgresCfg)
     if err != nil {
         log.Fatalf("%s", err.Error())
     }
+
+    tasksRepo := tasks.NewTasksRepo(db)
 
     procService, err := process.NewCodeProcessor(cfg.ProcCfg)
     if err != nil {
@@ -36,7 +40,6 @@ func main() {
         log.Fatalf("%s", err.Error())
     }
 
-    
     if err = rabbitMqReceiver.StartReceive(); err != nil {
         rabbitMqReceiver.Close()
         log.Fatalf("%s", err.Error())

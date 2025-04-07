@@ -1,14 +1,14 @@
 package postgres
 
 import (
+	"cpapp/pkg/config/types"
 	"fmt"
-	"http_server/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-func NewPostgresClient(cfg config.PostgreSQLConfig) (*sqlx.DB, error) {
+func NewPostgresClient(cfg types.PostgreSQLConfig) (*sqlx.DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
         cfg.Host, cfg.Port, cfg.DB, cfg.User, cfg.Password,
     )

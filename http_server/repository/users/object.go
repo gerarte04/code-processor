@@ -1,9 +1,10 @@
 package users
 
 import (
-	"http_server/pkg/database"
-	"http_server/repository"
-	"http_server/repository/models"
+	"cpapp/http_server/repository"
+	"cpapp/http_server/repository/models"
+	"cpapp/pkg/database"
+	"cpapp/pkg/database/postgres"
 	"log"
 
 	"github.com/google/uuid"
@@ -12,13 +13,11 @@ import (
 
 type UsersRepo struct {
     db *sqlx.DB
-    ep database.DBErrorProcessor
 }
 
-func NewUsersRepo(db *sqlx.DB, ep database.DBErrorProcessor) *UsersRepo {
+func NewUsersRepo(db *sqlx.DB) *UsersRepo {
     return &UsersRepo{
         db: db,
-        ep: ep,
     }
 }
 
@@ -53,7 +52,7 @@ func (r *UsersRepo) PostUser(key uuid.UUID, login string, password string) error
     if err != nil {
         log.Printf("posting user: %s", err.Error())
 
-        if r.ep.ProcessError(err) == database.ErrorUniqueViolation {
+        if postgres.ProcessError(err) == database.ErrorUniqueViolation {
             return repository.ErrorUserAlreadyExists
         } else {
             return repository.ErrorInternalQueryError
