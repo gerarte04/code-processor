@@ -26,7 +26,7 @@ import (
 // @description This is a sample server.
 
 // @host localhost:8080
-// @BasePath /cmd/
+// @BasePath /
 func main() {
     appFlags := config.ParseFlags()
     var cfg config.Config

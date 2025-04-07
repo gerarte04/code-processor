@@ -34,12 +34,17 @@ func (r *UsersRepo) GetUser(key uuid.UUID) (*models.User, error) {
 }
 
 func (r *UsersRepo) GetUserByCred(login string, password string) (*models.User, error) {
-    row := r.db.QueryRowx("SELECT * FROM users WHERE login = $1 AND password = $2", login, password)
+    row := r.db.QueryRowx("SELECT * FROM users WHERE login = $1", login)
     var user models.User
 
     if err := row.StructScan(&user); err != nil {
         log.Printf("getting user by cred: %s", err.Error())
         return nil, repository.ErrorWrongUserCreds
+    }
+
+    if user.Password != password {
+        log.Printf("getting user by cred: wrong password\n")
+        return nil, repository.ErrorWrongPassword
     }
 
     return &user, nil

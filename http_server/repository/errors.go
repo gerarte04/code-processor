@@ -12,4 +12,5 @@ var (
     ErrorInternalQueryError = errors.New("Internal database error\n")
 
     ErrorWrongUserCreds = errors.New("Wrong login or password\n")
+    ErrorWrongPassword = errors.New("Wrong login or password\n")
 )

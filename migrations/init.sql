@@ -1,5 +1,5 @@
 CREATE TABLE tasks (
-	id uuid PRIMARY KEY NOT NULL UNIQUE,
+	id uuid PRIMARY KEY NOT NULL,
 	finished boolean NOT NULL DEFAULT false,
 
 	output text DEFAULT '',
@@ -10,9 +10,9 @@ CREATE TABLE tasks (
 );
 
 CREATE TABLE users (
-	id uuid PRIMARY KEY NOT NULL UNIQUE,
+	id uuid PRIMARY KEY NOT NULL,
 	login varchar(50) NOT NULL UNIQUE,
 	password varchar(50) NOT NULL
 );
 
-CREATE INDEX ON users (login, password);
+CREATE INDEX ON users (login);
